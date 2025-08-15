@@ -51,6 +51,7 @@ namespace MailArchiver.Controllers
                     Username = a.Username,
                     UseSSL = a.UseSSL,
                     IsEnabled = a.IsEnabled,
+                    IsMBoxOnly = a.IsMBoxOnly,
                     LastSync = a.LastSync
                 })
                 .ToListAsync();
@@ -80,7 +81,8 @@ namespace MailArchiver.Controllers
                 Username = account.Username,
                 UseSSL = account.UseSSL,
                 LastSync = account.LastSync,
-                IsEnabled = account.IsEnabled
+                IsEnabled = account.IsEnabled,
+                IsMBoxOnly = account.IsMBoxOnly
             };
 
             ViewBag.EmailCount = emailCount;
@@ -103,6 +105,27 @@ namespace MailArchiver.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateMailAccountViewModel model)
         {
+            // For MBox only accounts, validate IMAP fields conditionally
+            if (!model.IsMBoxOnly)
+            {
+                if (string.IsNullOrWhiteSpace(model.ImapServer))
+                    ModelState.AddModelError("ImapServer", "IMAP server is required for non-MBox accounts");
+                if (string.IsNullOrWhiteSpace(model.Username))
+                    ModelState.AddModelError("Username", "Username is required for non-MBox accounts");
+                if (string.IsNullOrWhiteSpace(model.Password))
+                    ModelState.AddModelError("Password", "Password is required for non-MBox accounts");
+                if (model.ImapPort < 1 || model.ImapPort > 65535)
+                    ModelState.AddModelError("ImapPort", "Port must be between 1 and 65535");
+            }
+            else
+            {
+                // For MBox only accounts, set default values and disable by default
+                model.ImapServer = model.ImapServer ?? "localhost";
+                model.Username = model.Username ?? "mbox-only";
+                model.Password = model.Password ?? "mbox-only";
+                model.IsEnabled = false; // Default to disabled for MBox only accounts
+            }
+
             if (ModelState.IsValid)
             {
                 var account = new MailAccount
@@ -115,28 +138,40 @@ namespace MailArchiver.Controllers
                     Password = model.Password,
                     UseSSL = model.UseSSL,
                     IsEnabled = model.IsEnabled,
+                    IsMBoxOnly = model.IsMBoxOnly,
                     ExcludedFolders = string.Empty,
                     LastSync = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 };
 
                 try
                 {
-                    _logger.LogInformation("Testing connection for new account: {Name}, Server: {Server}:{Port}",
-                        model.Name, model.ImapServer, model.ImapPort);
-
-                    // Test connection before saving
-                    var connectionResult = await _emailService.TestConnectionAsync(account);
-                    if (!connectionResult)
+                    // Only test connection for non-MBox accounts
+                    if (!model.IsMBoxOnly)
                     {
-                        _logger.LogWarning("Connection test failed for account {Name}", model.Name);
-                        ModelState.AddModelError("", "Connection to email server could not be established. Please check your settings and ensure the server is reachable.");
-                        return View(model);
+                        _logger.LogInformation("Testing connection for new account: {Name}, Server: {Server}:{Port}",
+                            model.Name, model.ImapServer, model.ImapPort);
+
+                        // Test connection before saving
+                        var connectionResult = await _emailService.TestConnectionAsync(account);
+                        if (!connectionResult)
+                        {
+                            _logger.LogWarning("Connection test failed for account {Name}", model.Name);
+                            ModelState.AddModelError("", "Connection to email server could not be established. Please check your settings and ensure the server is reachable.");
+                            return View(model);
+                        }
+
+                        _logger.LogInformation("Connection test successful, saving account");
+                    }
+                    else
+                    {
+                        _logger.LogInformation("Creating MBox-only account: {Name} (IMAP connection test skipped)", model.Name);
                     }
 
-                    _logger.LogInformation("Connection test successful, saving account");
                     _context.MailAccounts.Add(account);
                     await _context.SaveChangesAsync();
-                    TempData["SuccessMessage"] = "Email account created successfully.";
+                    TempData["SuccessMessage"] = model.IsMBoxOnly 
+                        ? "MBox-only email account created successfully. You can now upload MBox files to this account."
+                        : "Email account created successfully.";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -170,6 +205,7 @@ namespace MailArchiver.Controllers
                 Username = account.Username,
                 UseSSL = account.UseSSL,
                 IsEnabled = account.IsEnabled,
+                IsMBoxOnly = account.IsMBoxOnly,
                 LastSync = account.LastSync,
                 ExcludedFolders = account.ExcludedFolders
             };
@@ -244,6 +280,7 @@ namespace MailArchiver.Controllers
                     account.ImapPort = model.ImapPort;
                     account.Username = model.Username;
                     account.IsEnabled = model.IsEnabled;
+                    account.IsMBoxOnly = model.IsMBoxOnly;
 
                     // Only update password if provided
                     if (!string.IsNullOrEmpty(model.Password))
@@ -254,8 +291,8 @@ namespace MailArchiver.Controllers
                     account.UseSSL = model.UseSSL;
                     account.ExcludedFolders = model.ExcludedFolders ?? string.Empty;
 
-                    // Test connection before saving
-                    if (!string.IsNullOrEmpty(model.Password))
+                    // Test connection before saving (skip for MBox only accounts)
+                    if (!string.IsNullOrEmpty(model.Password) && !model.IsMBoxOnly)
                     {
                         var connectionResult = await _emailService.TestConnectionAsync(account);
                         if (!connectionResult)

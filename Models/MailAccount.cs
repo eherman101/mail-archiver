@@ -13,6 +13,7 @@ public class MailAccount
     public bool UseSSL { get; set; }
     public DateTime LastSync { get; set; }
     public bool IsEnabled { get; set; } = true;
+    public bool IsMBoxOnly { get; set; } = false;
     
     // Folder exclusion functionality
     public string ExcludedFolders { get; set; } = string.Empty;

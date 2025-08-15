@@ -35,6 +35,9 @@ namespace MailArchiver.Models.ViewModels
         [Display(Name = "Account Enabled")]
         public bool IsEnabled { get; set; } = true;
 
+        [Display(Name = "MBox Only Account")]
+        public bool IsMBoxOnly { get; set; } = false;
+
         [Display(Name = "Excluded Folders")]
         public string? ExcludedFolders { get; set; } = string.Empty;
         

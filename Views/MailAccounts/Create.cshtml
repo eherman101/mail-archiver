@@ -23,39 +23,47 @@
                     <span asp-validation-for="EmailAddress" class="text-danger"></span>
                 </div>
                 
-                <h4 class="mt-4">IMAP Settings</h4>
-                
-                <div class="row">
-                    <div class="col-md-8 mb-3">
-                        <label asp-for="ImapServer" class="form-label">IMAP Server</label>
-                        <input asp-for="ImapServer" class="form-control" />
-                        <span asp-validation-for="ImapServer" class="text-danger"></span>
+                <div id="imapSettings">
+                    <h4 class="mt-4">IMAP Settings</h4>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="ImapServer" class="form-label">IMAP Server</label>
+                            <input asp-for="ImapServer" class="form-control" />
+                            <span asp-validation-for="ImapServer" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="ImapPort" class="form-label">IMAP Port</label>
+                            <input asp-for="ImapPort" class="form-control" />
+                            <span asp-validation-for="ImapPort" class="text-danger"></span>
+                        </div>
                     </div>
                     
-                    <div class="col-md-4 mb-3">
-                        <label asp-for="ImapPort" class="form-label">IMAP Port</label>
-                        <input asp-for="ImapPort" class="form-control" />
-                        <span asp-validation-for="ImapPort" class="text-danger"></span>
+                    <h4 class="mt-4">Authentication</h4>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Username" class="form-label">Username</label>
+                        <input asp-for="Username" class="form-control" />
+                        <span asp-validation-for="Username" class="text-danger"></span>
                     </div>
-                </div>
-                
-                <h4 class="mt-4">Authentication</h4>
-                
-                <div class="mb-3">
-                    <label asp-for="Username" class="form-label">Username</label>
-                    <input asp-for="Username" class="form-control" />
-                    <span asp-validation-for="Username" class="text-danger"></span>
-                </div>
-                
-                <div class="mb-3">
-                    <label asp-for="Password" class="form-label">Password</label>
-                    <input asp-for="Password" class="form-control" type="password" />
-                    <span asp-validation-for="Password" class="text-danger"></span>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" class="form-control" type="password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
                 </div>
                 
                 <div class="mb-3 form-check">
                     <input asp-for="UseSSL" class="form-check-input" />
                     <label asp-for="UseSSL" class="form-check-label">Use SSL</label>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    <input asp-for="IsMBoxOnly" class="form-check-input" id="mboxOnlyCheck" />
+                    <label asp-for="IsMBoxOnly" class="form-check-label">MBox Only Account</label>
+                    <div class="form-text">Check this if you only plan to upload MBox files (IMAP settings will be optional)</div>
                 </div>
                 
                 <div class="mb-3 form-check">
@@ -75,4 +83,34 @@
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            // Handle MBox Only checkbox
+            $('#mboxOnlyCheck').change(function() {
+                var isChecked = $(this).is(':checked');
+                var $imapSettings = $('#imapSettings');
+                var $accountEnabled = $('input[name="IsEnabled"]');
+                
+                if (isChecked) {
+                    // Hide IMAP settings and disable account by default
+                    $imapSettings.hide();
+                    $accountEnabled.prop('checked', false);
+                    
+                    // Clear IMAP field values to avoid validation issues
+                    $('#ImapServer').val('localhost');
+                    $('#Username').val('mbox-only');
+                    $('#Password').val('mbox-only');
+                } else {
+                    // Show IMAP settings and enable account by default
+                    $imapSettings.show();
+                    $accountEnabled.prop('checked', true);
+                    
+                    // Clear placeholder values
+                    if ($('#ImapServer').val() === 'localhost') $('#ImapServer').val('');
+                    if ($('#Username').val() === 'mbox-only') $('#Username').val('');
+                    if ($('#Password').val() === 'mbox-only') $('#Password').val('');
+                }
+            });
+        });
+    </script>
 }

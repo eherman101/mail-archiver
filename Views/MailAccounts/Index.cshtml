@@ -41,7 +41,11 @@
                                 <td>@item.EmailAddress</td>
                                 <td>@item.ImapServer:@item.ImapPort</td>
                                 <td>
-                                    @if (item.IsEnabled)
+                                    @if (item.IsMBoxOnly)
+                                    {
+                                        <span class="badge bg-info">MBox Only</span>
+                                    }
+                                    else if (item.IsEnabled)
                                     {
                                         <span class="badge bg-success">Enabled</span>
                                     }
@@ -87,7 +91,7 @@
                                             </button>
                                         </form>
 
-                                        @if (item.IsEnabled)
+                                        @if (item.IsEnabled && !item.IsMBoxOnly)
                                         {
                                             <form asp-action="Sync" asp-route-id="@item.Id" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
@@ -122,7 +126,11 @@
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <h6 class="card-title mb-0">@item.Name</h6>
-                        @if (item.IsEnabled)
+                        @if (item.IsMBoxOnly)
+                        {
+                            <span class="badge bg-info">MBox Only</span>
+                        }
+                        else if (item.IsEnabled)
                         {
                             <span class="badge bg-success">Enabled</span>
                         }
@@ -173,7 +181,7 @@
                                     </button>
                                 </form>
                             </div>
-                            @if (item.IsEnabled)
+                            @if (item.IsEnabled && !item.IsMBoxOnly)
                             {
                                 <div class="col">
                                     <form asp-action="Sync" asp-route-id="@item.Id" method="post" class="w-100">

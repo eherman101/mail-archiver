@@ -1,0 +1,13 @@
+postgres-data/
+logs/
+obj/
+bin/
+.vs/
+.vscode/
+*.user
+*.suo
+.git/
+.gitignore
+README.md
+Screenshots/
+LICENSE

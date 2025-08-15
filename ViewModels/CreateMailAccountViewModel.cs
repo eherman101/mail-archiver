@@ -13,20 +13,16 @@ namespace MailArchiver.Models.ViewModels
         [Display(Name = "Email address")]
         public string EmailAddress { get; set; }
         
-        [Required(ErrorMessage = "IMAP server is required")]
         [Display(Name = "IMAP server")]
         public string ImapServer { get; set; }
         
-        [Required(ErrorMessage = "IMAP port is required")]
         [Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
         [Display(Name = "IMAP port")]
         public int ImapPort { get; set; } = 993;
         
-        [Required(ErrorMessage = "Username is required")]
         [Display(Name = "Username")]
         public string Username { get; set; }
         
-        [Required(ErrorMessage = "Password is required")]
         [Display(Name = "Password")]
         public string Password { get; set; }
         
@@ -35,5 +31,8 @@ namespace MailArchiver.Models.ViewModels
         
         [Display(Name = "Account Enabled")]
         public bool IsEnabled { get; set; } = true;
+        
+        [Display(Name = "MBox Only Account")]
+        public bool IsMBoxOnly { get; set; } = false;
     }
 }
