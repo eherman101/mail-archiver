@@ -517,7 +517,7 @@ namespace MailArchiver.Controllers
         public async Task<IActionResult> ImportMBox()
         {
             var accounts = await _context.MailAccounts
-                .Where(a => a.IsEnabled)
+                .Where(a => a.IsEnabled || a.IsMBoxOnly)
                 .OrderBy(a => a.Name)
                 .ToListAsync();
 
@@ -526,7 +526,7 @@ namespace MailArchiver.Controllers
                 AvailableAccounts = accounts.Select(a => new SelectListItem
                 {
                     Value = a.Id.ToString(),
-                    Text = $"{a.Name} ({a.EmailAddress})"
+                    Text = $"{a.Name} ({a.EmailAddress}){(a.IsMBoxOnly ? " - MBox Only" : "")}"
                 }).ToList(),
                 MaxFileSize = 5_000_000_000 // 5 GB
             };
@@ -543,14 +543,14 @@ namespace MailArchiver.Controllers
         {
             // Reload accounts for validation failure
             var accounts = await _context.MailAccounts
-                .Where(a => a.IsEnabled)
+                .Where(a => a.IsEnabled || a.IsMBoxOnly)
                 .OrderBy(a => a.Name)
                 .ToListAsync();
 
             model.AvailableAccounts = accounts.Select(a => new SelectListItem
             {
                 Value = a.Id.ToString(),
-                Text = $"{a.Name} ({a.EmailAddress})",
+                Text = $"{a.Name} ({a.EmailAddress}){(a.IsMBoxOnly ? " - MBox Only" : "")}",
                 Selected = a.Id == model.TargetAccountId
             }).ToList();
 
