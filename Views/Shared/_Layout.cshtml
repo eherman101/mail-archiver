@@ -1,18 +1,36 @@
-﻿@using MailArchiver.Services
-@inject IAuthenticationService AuthService
-
+@using MailArchiver.Services
+@inject MailArchiver.Services.IAuthenticationService AuthService
+@inject Microsoft.Extensions.Localization.IStringLocalizer<MailArchiver.SharedResource> Localizer
+@{ var currentCulture = System.Globalization.CultureInfo.CurrentUICulture.Name; }
 <!DOCTYPE html>
-<html lang="en">
+<html lang="@currentCulture">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+        (function() {
+            var t = localStorage.getItem('theme');
+            if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        })();
+    </script>
     <title>@ViewData["Title"] - Mail-Archiver</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/mobile-tables.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/dark-mode.css" asp-append-version="true" />
     <link rel="icon" type="image/svg" href="~/favicon.svg">
+    <link rel="manifest" href="~/manifest.json">
+    <!-- Apple touch icons for iOS home screen -->
+    <link rel="apple-touch-icon" href="~/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="~/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="~/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="~/icons/icon-128x128.png">
+    <meta name="apple-mobile-web-app-title" content="Mail Archiver">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
 </head>
 
 <body>
@@ -31,27 +49,30 @@
                         <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Home" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
                                 asp-controller="Home" asp-action="Index">
-                                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+                                <i class="bi bi-speedometer2 me-1"></i>@Localizer["Dashboard"]
                             </a>
                         </li>
-                        <li class="nav-item"></li>
+                        <li class="nav-item">
                             <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Emails" && (ViewContext.RouteData.Values["Action"].ToString() == "Index" || ViewContext.RouteData.Values["Action"].ToString() == "Details") ? "active" : "")"
                                 asp-controller="Emails" asp-action="Index">
-                                <i class="bi bi-archive me-1"></i>Archive
+                                <i class="bi bi-archive me-1"></i>@Localizer["Archive"]
                             </a>
                         </li>
-                        @if (AuthService.IsCurrentUserAdmin(Context))
+                        @if (AuthService.IsCurrentUserAdmin(Context) || AuthService.IsCurrentUserSelfManager(Context))
                         {
                             <li class="nav-item">
                                 <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "MailAccounts" ? "active" : "")"
                                     asp-controller="MailAccounts" asp-action="Index">
-                                    <i class="bi bi-envelope-at me-1"></i>Mail Accounts
+                                    <i class="bi bi-envelope-at me-1"></i>@Localizer["MailAccounts"]
                                 </a>
                             </li>
+                        }
+                        @if (AuthService.IsCurrentUserAdmin(Context))
+                        {
                             <li class="nav-item">
                                 <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Users" ? "active" : "")"
                                     asp-controller="Users" asp-action="Index">
-                                    <i class="bi bi-people me-1"></i>Users
+                                    <i class="bi bi-people me-1"></i>@Localizer["Users"]
                                 </a>
                             </li>
                         }
@@ -61,7 +82,7 @@
                                 <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Emails" && ViewContext.RouteData.Values["Action"].ToString().Contains("BatchRestore") ? "active" : "")"
                                     asp-controller="Emails" asp-action="Jobs">
                                     <i class="bi bi-clock-history me-1"></i>
-                                    Jobs
+                                    @Localizer["Jobs"]
                                     @{
                                         try
                                         {
@@ -84,11 +105,20 @@
                                 </a>
                             </li>
                         }
+                        <li class="nav-item">
+                            <a class="nav-link @(ViewContext.RouteData.Values["Controller"].ToString() == "Logs" ? "active" : "")"
+                                asp-controller="Logs" asp-action="Index">
+                                <i class="bi bi-list-check me-1"></i>@Localizer["Log"]
+                            </a>
+                        </li>
                     </ul>
                     <div class="d-flex align-items-center">
                         <span class="navbar-text me-3 d-none d-lg-inline">
-                            <i class="bi bi-clock-history"></i> Last update: @DateTime.Now.ToString("MM/dd HH:mm")
+                            <i class="bi bi-clock-history"></i> @Localizer["LastUpdate"] <span class="utc-timestamp" data-utc-time="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss")">@DateTime.Now.ToString("g")</span>
                         </span>
+                        <button id="theme-toggle" class="btn btn-outline-light me-2" type="button" title="Toggle Dark Mode">
+                            <i class="bi bi-circle-half"></i>
+                        </button>
                         @await Html.PartialAsync("_UserInfo")
                     </div>
                 </div>
@@ -115,18 +145,44 @@
         </main>
     </div>
     <footer class="footer">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span>@DateTime.Now.Year - s1t5 | Mail-Archiver v2508.4</span>
+        @{
+            var asmVer = ReleaseNotesOptions.Value.AppVersion ?? "dev";
+        }
+        <span>@DateTime.Now.Year - Mail-Archiver @asmVer</span>
+        <a href="https://mail-archiver.org/" class="text-muted text-decoration-none" target="_blank">mail-archiver.org</a>
+    </footer>
+
+    <!-- =============================================================== -->
+    <!--         Version Update / Changelog Splash Screen Modal           -->
+    <!-- =============================================================== -->
+    <div class="modal fade" id="changelogModal" tabindex="-1" aria-labelledby="changelogModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="changelogModalLabel">
+                        <i class="bi bi-stars me-1"></i>Update: <span id="changelogVersion">-</span>
+                    </h5>
+                    <span class="badge bg-light text-dark ms-2">@Localizer["NewFeatures"]</span>
                 </div>
-                <div>
-                    <a href="https://github.com/s1t5/mail-archiver" class="text-muted text-decoration-none"
-                        target="_blank">GitHub</a>
+                <div class="modal-body" id="changelogBody">
+                    <div class="d-flex justify-content-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="https://github.com/s1t5/mail-archiver/releases" target="_blank" class="btn btn-outline-secondary me-auto">
+                        <i class="bi bi-github me-1"></i>@Localizer["AllReleases"]
+                    </a>
+                    <button type="button" class="btn btn-primary" id="dismissChangelogBtn">
+                        <i class="bi bi-check-lg me-1"></i>@Localizer["GotIt"]
+                    </button>
                 </div>
             </div>
         </div>
-    </footer>
+    </div>
+
     <script src="~/lib/jquery/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
@@ -139,22 +195,33 @@
             if (!utcDateString) return utcDateString;
 
             try {
-                // Versuche verschiedene Datumsformate
+                // Parse UTC time - ensure it's treated as UTC
                 let utcDate;
                 if (utcDateString.includes('T')) {
-                    // ISO String Format
+                    // ISO String Format - append Z if not present to ensure UTC parsing
                     utcDate = new Date(utcDateString + (utcDateString.endsWith('Z') ? '' : 'Z'));
                 } else {
-                    // Andere Formate
-                    utcDate = new Date(utcDateString);
+                    // Legacy format - assume it's UTC
+                    utcDate = new Date(utcDateString + 'Z');
                 }
 
                 if (isNaN(utcDate.getTime())) {
-                    return utcDateString; // Ungültiges Datum
+                    console.warn('Invalid date format:', utcDateString);
+                    return utcDateString; // Return original if parsing fails
                 }
 
-                // Format: DD.MM.YYYY HH:mm:ss oder je nach Locale
-                return utcDate.toLocaleDateString() + ' ' + utcDate.toLocaleTimeString();
+                // Get the culture from the HTML lang attribute
+                const cultureLang = document.documentElement.lang || 'de-DE';
+                
+                // Format in local timezone with culture-specific formatting
+                return utcDate.toLocaleString(cultureLang, {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                });
             } catch (e) {
                 console.error('Fehler bei der Datums-Konvertierung:', e, 'Ursprünglicher Wert:', utcDateString);
                 return utcDateString;
@@ -163,13 +230,17 @@
 
         // Funktion zum Aktualisieren aller Zeitstempel auf der Seite
         function updateAllTimestamps() {
-            // Sucht nach allen Elementen mit data-utc-time Attribut
-            const timeElements = document.querySelectorAll('[data-utc-time]');
+            // Sucht nach allen Elementen mit data-utc-time Attribut oder utc-timestamp Klasse
+            const timeElements = document.querySelectorAll('[data-utc-time], .utc-timestamp[data-utc-time]');
+            
             timeElements.forEach(element => {
                 const utcTime = element.getAttribute('data-utc-time');
-                if (utcTime && utcTime !== '0001-01-01T00:00:00') {
+                if (utcTime && utcTime !== '0001-01-01T00:00:00' && utcTime !== '') {
                     const localTime = convertUTCToLocal(utcTime);
                     element.textContent = localTime;
+                    
+                    // Add a data attribute to indicate conversion has been done
+                    element.setAttribute('data-converted', 'true');
                 }
             });
         }
@@ -206,6 +277,61 @@
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    @* Changelog / Version Update Splash Screen Logic (admin only) *@
+    @if (AuthService.IsCurrentUserAdmin(Context))
+    {
+        <script>
+            (function() {
+                var changelogModal = null;
+                var dismissBtn = document.getElementById('dismissChangelogBtn');
+
+                function dismissVersion() {
+                    fetch('/Home/DismissVersion', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                        }
+                    }).then(function () {
+                        if (changelogModal) changelogModal.hide();
+                    }).catch(function () {
+                        if (changelogModal) changelogModal.hide();
+                    });
+                }
+
+                if (dismissBtn) {
+                    dismissBtn.addEventListener('click', dismissVersion);
+                }
+
+                document.addEventListener('DOMContentLoaded', function () {
+                    fetch('/Home/GetReleaseNotes')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (!data || !data.show) return;
+
+                            // Populate modal
+                            var verSpan = document.getElementById('changelogVersion');
+                            if (verSpan) verSpan.textContent = data.version || '-';
+                            var bodyEl = document.getElementById('changelogBody');
+                            if (bodyEl) bodyEl.innerHTML = data.bodyHtml || '';
+
+                            // Show modal
+                            var modalEl = document.getElementById('changelogModal');
+                            if (!modalEl) return;
+                            changelogModal = new bootstrap.Modal(modalEl, {
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            changelogModal.show();
+                        })
+                        .catch(function () {
+                            // Silently ignore - GitHub API may be unreachable
+                        });
+                });
+            })();
+        </script>
+    }
 </body>
 
 </html>

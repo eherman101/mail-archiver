@@ -16,10 +16,16 @@ namespace MailArchiver.Models
         public int ProcessedEmails { get; set; }
         public int SuccessCount { get; set; }
         public int FailedCount { get; set; }
+        public int SkippedMalformedCount { get; set; }
+        public int SkippedAlreadyExistsCount { get; set; }
         public int TotalEmails { get; set; }
         public string? ErrorMessage { get; set; }
         public string? CurrentEmailSubject { get; set; }
         public long ProcessedBytes { get; set; }
+        /// <summary>
+        /// If true, the source file will not be deleted after processing (for CLI local imports).
+        /// </summary>
+        public bool KeepSourceFile { get; set; }
     }
 
     public enum MBoxImportJobStatus
@@ -27,6 +33,7 @@ namespace MailArchiver.Models
         Queued,
         Running,
         Completed,
+        CompletedWithErrors,
         Failed,
         Cancelled
     }

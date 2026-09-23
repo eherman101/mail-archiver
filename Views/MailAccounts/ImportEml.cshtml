@@ -1,0 +1,187 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<MailArchiver.SharedResource> Localizer
+@model MailArchiver.Models.ViewModels.EmlImportViewModel
+@{
+    ViewData["Title"] = Localizer["ImportEmlFileTitle"];
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">@Localizer["ImportEmlFileTitle"]</h1>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> @Localizer["BackToAccounts"]
+        </a>
+    </div>
+
+    <div class="msa-info-banner mb-3">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+            <div>
+                <strong>@Localizer["EmlImportInformation"]</strong>
+                <ul class="mb-0 mt-1">
+                    <li>@Localizer["SupportedFormatsEml"]</li>
+                    <li>@string.Format(Localizer["MaximumFileSize"], Model.MaxFileSizeFormatted)</li>
+                    <li>@Localizer["LargeFilesBackground"]</li>
+                    <li>@Localizer["DuplicateEmailsSkipped"]</li>
+                    <li>@Localizer["EmlFolderStructureInfo"]</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-light">
+            <span class="h6 mb-0"><i class="bi bi-file-earmark-zip me-1"></i>@Localizer["UploadAndImportSettings"]</span>
+        </div>
+        <div class="card-body">
+            <form asp-action="ImportEml" method="post" enctype="multipart/form-data" id="emlImportForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="mb-4">
+                    <label asp-for="EmlFile" class="form-label">@Localizer["SelectEmlFile"]</label>
+                    <input asp-for="EmlFile" type="file" class="form-control" accept=".zip" id="emlFileInput">
+                    <div class="form-text">
+                        @string.Format(Localizer["SupportedFormatsEmlWithMax"], Model.MaxFileSizeFormatted)
+                    </div>
+                    <span asp-validation-for="EmlFile" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="TargetAccountId" class="form-label">@Localizer["TargetAccount"]</label>
+                    <select asp-for="TargetAccountId" asp-items="Model.AvailableAccounts" class="form-select" id="accountSelect">
+                        <option value="">@Localizer["PlaceholderSelectAccount"]</option>
+                    </select>
+                    <span asp-validation-for="TargetAccountId" class="text-danger"></span>
+                </div>
+
+                <div class="alert alert-secondary">
+                    <h6 class="mb-2">@Localizer["EmlImportFolderInfo"]</h6>
+                    <p class="mb-0">@Localizer["EmlImportFolderInfoDetail"]</p>
+                </div>
+
+                <div id="fileInfo" class="alert alert-secondary" style="display: none;">
+                    <h6 class="mb-2">@Localizer["FileInformation"]</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <strong>@Localizer["FileNameLabel"]</strong> <span id="fileName"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>@Localizer["FileSizeLabel"]</strong> <span id="fileSize"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <strong>@Localizer["EstimatedProcessingTime"]</strong> <span id="estimatedTime"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>@Localizer["Important"]</strong> @Localizer["ImportBackgroundInfo1"] 
+                    @Localizer["ImportBackgroundInfo2"]
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                            <i class="bi bi-upload me-2"></i>@Localizer["StartImport"]
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">@Localizer["Cancel"]</a>
+                    </div>
+                    <div>
+                        <a asp-controller="Emails" asp-action="Jobs" class="btn btn-outline-info">
+                            <i class="bi bi-clock-history me-1"></i>@Localizer["ViewImportJobs"]
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        const i18n = {
+            startingImport: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["StartingImport"].Value)),
+            uploadInProgress: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["UploadInProgress"].Value))
+        };
+        $(document).ready(function () {
+            // File input change handler
+            $('#emlFileInput').on('change', function() {
+                const file = this.files[0];
+                const submitBtn = $('#submitBtn');
+                const fileInfo = $('#fileInfo');
+                
+                if (file) {
+                    // Show file information
+                    $('#fileName').text(file.name);
+                    $('#fileSize').text(formatFileSize(file.size));
+                    
+                    // Estimate processing time (rough estimate: 1MB per 10 seconds)
+                    const estimatedMinutes = Math.ceil((file.size / 1024 / 1024) / 6);
+                    let timeText = estimatedMinutes < 60 
+                        ? estimatedMinutes + ' minutes' 
+                        : Math.ceil(estimatedMinutes / 60) + ' hours';
+                    $('#estimatedTime').text(timeText);
+                    
+                    fileInfo.show();
+                    
+                    // Check file size
+                    const maxSize = @Model.MaxFileSize;
+                    if (file.size > maxSize) {
+                        alert('@string.Format(Localizer["FileSizeExceedsMax"], Model.MaxFileSizeFormatted)');
+                        submitBtn.prop('disabled', true);
+                        return;
+                    }
+                    
+                    // Enable submit if account is also selected
+                    updateSubmitButton();
+                } else {
+                    fileInfo.hide();
+                    submitBtn.prop('disabled', true);
+                }
+            });
+
+            // Account selection change handler
+            $('#accountSelect').change(function () {
+                updateSubmitButton();
+            });
+
+            function updateSubmitButton() {
+                const hasFile = $('#emlFileInput')[0].files.length > 0;
+                const hasAccount = $('#accountSelect').val() !== '';
+                
+                $('#submitBtn').prop('disabled', !(hasFile && hasAccount));
+            }
+
+            function formatFileSize(bytes) {
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                if (bytes === 0) return '0 B';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            }
+
+            // Form submission handler with progress indication
+            $('#emlImportForm').on('submit', function(e) {
+                const submitBtn = $('#submitBtn');
+                submitBtn.html('<i class="bi bi-hourglass-split me-2"></i>' + i18n.startingImport);
+                submitBtn.prop('disabled', true);
+                
+                // Show processing message
+                const processingAlert = $('<div class="alert alert-info mt-3">' +
+                    '<i class="bi bi-clock-history me-2"></i>' +
+                    i18n.uploadInProgress +
+                    '</div>');
+                $(this).after(processingAlert);
+            });
+
+            // Auto-select account if there's only one
+            if ($('#accountSelect option').length === 2) {
+                $('#accountSelect option:last').prop('selected', true);
+                $('#accountSelect').trigger('change');
+            }
+        });
+    </script>
+}

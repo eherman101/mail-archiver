@@ -1,31 +1,43 @@
+﻿@inject Microsoft.Extensions.Localization.IStringLocalizer<MailArchiver.SharedResource> Localizer
+@inject MailArchiver.Services.IAuthenticationService AuthService
 @model MailArchiver.Models.BatchRestoreJob
 @{
-    ViewData["Title"] = "Batch Restore Status";
+    ViewData["Title"] = Localizer["BatchRestoreStatusTitle"];
+
+    // The offload report lists the source mailbox's folder names, and this page is not scoped to
+    // the job's owner, so it is only shown to that owner and to an admin. BatchRestoreJob.UserId
+    // is written from User.Identity.Name, which is what GetCurrentUserDisplayName returns.
+    var currentUser = AuthService.GetCurrentUserDisplayName(Context);
+    var mayReadReport = AuthService.IsCurrentUserAdmin(Context)
+        || (!string.IsNullOrEmpty(currentUser)
+            && string.Equals(Model.UserId, currentUser, StringComparison.OrdinalIgnoreCase));
+    // P2: cancel rights follow the same owner-or-admin rule the controller enforces.
+    var mayCancel = MailArchiver.Services.JobOwnership.MayCancel(
+        currentUser, AuthService.IsCurrentUserAdmin(Context), Model.UserId);
 }
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1>Batch Restore Status</h1>
-        <div>
-            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> Back
+        <h1 class="h3 mb-0">@Localizer["BatchRestoreStatusTitle"]</h1>
+        <div class="d-flex gap-2">
+            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left"></i> @Localizer["Back"]
             </a>
-            <a asp-action="Jobs" class="btn btn-outline-info">
-                <i class="bi bi-list"></i> All Jobs
+            <a asp-action="Jobs" class="btn btn-outline-info btn-sm">
+                <i class="bi bi-list"></i> @Localizer["AllJobs"]
             </a>
         </div>
     </div>
 
     <div class="card">
         <div class="card-header bg-light">
-            <h5 class="mb-0">Job Information</h5>
+            <span class="h6 mb-0"><i class="bi bi-info-circle me-1"></i>@Localizer["JobInformation"]</span>
         </div>
         <div class="card-body">
             <dl class="row">
-                <dt class="col-sm-3">Job ID:</dt>
+                <dt class="col-sm-3">@Localizer["JobIDLabel"]</dt>
                 <dd class="col-sm-9"><code>@Model.JobId</code></dd>
-                
-                <dt class="col-sm-3">Status:</dt>
+                <dt class="col-sm-3">@Localizer["StatusLabel"]</dt>
                 <dd class="col-sm-9">
                     <span class="badge bg-@(Model.Status == BatchRestoreJobStatus.Running ? "primary" : 
                                            Model.Status == BatchRestoreJobStatus.Completed ? "success" : 
@@ -34,19 +46,14 @@
                         @Model.Status
                     </span>
                 </dd>
-                
-                <dt class="col-sm-3">Total Emails:</dt>
+                <dt class="col-sm-3">@Localizer["TotalEmailsLabel"]</dt>
                 <dd class="col-sm-9">@Model.EmailIds.Count.ToString("N0")</dd>
-                
-                <dt class="col-sm-3">Progress:</dt>
+                <dt class="col-sm-3">@Localizer["ProgressLabel"]</dt>
                 <dd class="col-sm-9">
-                    @{
-                        var progressPercent = Model.EmailIds.Count > 0 ? Math.Round((double)Model.ProcessedCount * 100.0 / Model.EmailIds.Count, 1) : 0;
-                        var progressWidth = Math.Min(100, Math.Max(0, progressPercent));
-                    }
+                    @{ var progressPercent = Model.EmailIds.Count > 0 ? Math.Round((double)Model.ProcessedCount * 100.0 / Model.EmailIds.Count, 1) : 0; var progressWidth = Math.Min(100, Math.Max(0, progressPercent)); }
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="small text-muted">Progress</span>
+                            <span class="small text-muted">@Localizer["ProgressLabel"]</span>
                             <span class="small fw-bold">@progressPercent.ToString("F1")%</span>
                         </div>
                         <div class="progress" style="height: 25px;">
@@ -64,67 +71,62 @@
                         </div>
                         <div class="d-flex justify-content-between mt-1">
                             <small class="text-muted">
-                                @Model.ProcessedCount.ToString("N0") of @Model.EmailIds.Count.ToString("N0") processed
+                                @Model.ProcessedCount.ToString("N0") @Localizer["Of"] @Model.EmailIds.Count.ToString("N0") @Localizer["ProcessedSuffix"]
                             </small>
                             <small class="text-muted">
                                 @if (Model.Status == BatchRestoreJobStatus.Running && Model.ProcessedCount > 0)
                                 {
                                     var remainingCount = Model.EmailIds.Count - Model.ProcessedCount;
-                                    <span>@remainingCount.ToString("N0") remaining</span>
+                                    <span>@remainingCount.ToString("N0") @Localizer["RemainingSuffix"]</span>
                                 }
                             </small>
                         </div>
                     </div>
                 </dd>
-                
-                <dt class="col-sm-3">Results:</dt>
+                <dt class="col-sm-3">@Localizer["ResultsLabel"]</dt>
                 <dd class="col-sm-9">
                     <div class="row">
                         <div class="col-6">
                             <span class="badge bg-success">
                                 <i class="bi bi-check-circle me-1"></i>
-                                Success: @Model.SuccessCount.ToString("N0")
+                                @Localizer["SuccessLabel"] @Model.SuccessCount.ToString("N0")
                             </span>
                         </div>
                         <div class="col-6">
                             <span class="badge bg-danger">
                                 <i class="bi bi-x-circle me-1"></i>
-                                Failed: @Model.FailedCount.ToString("N0")
+                                @Localizer["FailedLabel"] @Model.FailedCount.ToString("N0")
                             </span>
                         </div>
                     </div>
                 </dd>
-                
-                <dt class="col-sm-3">Created:</dt>
+                <dt class="col-sm-3">@Localizer["CreatedLabel"]</dt>
                 <dd class="col-sm-9">
                     <span class="utc-timestamp" data-utc-time="@Model.Created.ToString("yyyy-MM-ddTHH:mm:ss")">
-                        @Model.Created.ToString("yyyy-MM-dd HH:mm:ss")
+                        @Model.Created.ToString("g")
                     </span>
                 </dd>
-                
                 @if (Model.Started.HasValue)
                 {
-                    <dt class="col-sm-3">Started:</dt>
+                    <dt class="col-sm-3">@Localizer["StartedLabel"]</dt>
                     <dd class="col-sm-9">
                         <span class="utc-timestamp" data-utc-time="@Model.Started.Value.ToString("yyyy-MM-ddTHH:mm:ss")">
-                            @Model.Started.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                            @Model.Started.Value.ToString("g")
                         </span>
                     </dd>
                 }
-                
                 @if (Model.Completed.HasValue)
                 {
-                    <dt class="col-sm-3">Completed:</dt>
+                    <dt class="col-sm-3">@Localizer["CompletedLabel"]</dt>
                     <dd class="col-sm-9">
                         <span class="utc-timestamp" data-utc-time="@Model.Completed.Value.ToString("yyyy-MM-ddTHH:mm:ss")">
-                            @Model.Completed.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                            @Model.Completed.Value.ToString("g")
                         </span>
                     </dd>
-                    
                     @if (Model.Started.HasValue)
                     {
                         var duration = Model.Completed.Value - Model.Started.Value;
-                        <dt class="col-sm-3">Duration:</dt>
+                        <dt class="col-sm-3">@Localizer["DurationLabel"]</dt>
                         <dd class="col-sm-9">
                             <span class="badge bg-info">
                                 @duration.ToString(@"hh\:mm\:ss")
@@ -132,10 +134,38 @@
                         </dd>
                     }
                 }
-                
+                @if (Model.IsOffload)
+                {
+                    <dt class="col-sm-3">@Localizer["OffloadJob"]</dt>
+                    <dd class="col-sm-9">
+                        <span class="badge bg-info text-dark">@Model.Offload!.DescribeWindow()</span>
+                        @if (Model.Offload.DryRun)
+                        {
+                            <span class="badge bg-warning text-dark">@Localizer["OffloadDryRun"]</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-3">@Localizer["OffloadAppended"]</dt>
+                    <dd class="col-sm-9">@Model.AppendedCount.ToString("N0")</dd>
+
+                    <dt class="col-sm-3">@Localizer["OffloadAlreadyPresent"]</dt>
+                    <dd class="col-sm-9">
+                        @Model.SkippedAlreadyPresentCount.ToString("N0")
+                        @if (Model.MatchedByFingerprintCount > 0)
+                        {
+                            <small class="text-muted">(@Model.MatchedByFingerprintCount.ToString("N0") @Localizer["OffloadByFingerprint"])</small>
+                        }
+                    </dd>
+
+                    @if (Model.SkippedExcludedFolderCount > 0)
+                    {
+                        <dt class="col-sm-3">@Localizer["OffloadExcluded"]</dt>
+                        <dd class="col-sm-9">@Model.SkippedExcludedFolderCount.ToString("N0")</dd>
+                    }
+                }
                 @if (!string.IsNullOrEmpty(Model.ErrorMessage))
                 {
-                    <dt class="col-sm-3">Error:</dt>
+                    <dt class="col-sm-3">@Localizer["ErrorLabel"]</dt>
                     <dd class="col-sm-9">
                         <div class="alert alert-danger">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
@@ -145,27 +175,31 @@
                 }
             </dl>
 
-            @if (Model.Status == BatchRestoreJobStatus.Running || Model.Status == BatchRestoreJobStatus.Queued)
+            @if (!string.IsNullOrEmpty(Model.Report) && mayReadReport)
             {
-                <div class="mt-4 pt-3 border-top">
-                    <form asp-action="CancelBatchRestore" method="post" style="display: inline;" 
-                          onsubmit="return confirm('Are you sure you want to cancel this job?');">
-                        <input type="hidden" name="jobId" value="@Model.JobId" />
-                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                        <button type="submit" class="btn btn-warning">
-                            <i class="bi bi-stop-circle"></i> Cancel Job
-                        </button>
-                    </form>
-                </div>
+                <h6 class="mt-3">@Localizer["OffloadReport"]</h6>
+                <pre class="bg-light border rounded p-3 mb-0" style="overflow-x: auto; font-size: 0.85rem;">@Model.Report</pre>
             }
 
+            @if (Model.Status == BatchRestoreJobStatus.Running || Model.Status == BatchRestoreJobStatus.Queued)
+            {
+                @if (mayCancel)
+                {
+                    <div class="mt-4 pt-3 border-top">
+                        <!-- Button to trigger the modal -->
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#cancelJobModal">
+                            <i class="bi bi-stop-circle"></i> @Localizer["CancelJob"]
+                        </button>
+                    </div>
+                }
+            }
             @if (Model.Status == BatchRestoreJobStatus.Completed)
             {
                 <div class="mt-4 pt-3 border-top">
                     <div class="alert alert-success">
                         <i class="bi bi-check-circle-fill me-2"></i>
-                        <strong>Job Completed!</strong> 
-                        Processed @Model.ProcessedCount.ToString("N0") emails with @Model.SuccessCount.ToString("N0") successful and @Model.FailedCount.ToString("N0") failed.
+                        <strong>@Localizer["JobCompletedTitle"]</strong> 
+                        @string.Format(Localizer["JobCompletedSummary"], Model.ProcessedCount.ToString("N0"), Model.SuccessCount.ToString("N0"), Model.FailedCount.ToString("N0"))
                     </div>
                 </div>
             }
@@ -177,20 +211,77 @@
 {
     @section Scripts {
         <script>
-            // Auto-refresh page every 5 seconds for running jobs
-            setTimeout(function() {
-                location.reload();
-            }, 5000);
-            
-            // Show countdown
+            let refreshTimer;
+            let countdownTimer;
             let countdown = 5;
-            const countdownInterval = setInterval(function() {
-                countdown--;
-                document.title = `(${countdown}s) Batch Restore Status - @Model.JobId.Substring(0, 8)`;
-                if (countdown <= 0) {
-                    clearInterval(countdownInterval);
+            const statusTitle = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Localizer["BatchRestoreStatusTitle"].Value));
+            const jobIdShort = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.JobId.Substring(0, 8)));
+
+            function startRefresh() {
+                refreshTimer = setTimeout(function() { 
+                    // Preserve jobId in the URL when reloading
+                    const currentUrl = new URL(window.location.href);
+                    location.reload(); 
+                }, 5000);
+                
+                countdownTimer = setInterval(function() {
+                    countdown--;
+                    document.title = `(${countdown}s) ${statusTitle} - ${jobIdShort}`;
+                    if (countdown <= 0) { 
+                        clearInterval(countdownTimer); 
+                        countdown = 5; // Reset for next cycle
+                    }
+                }, 1000);
+            }
+            
+            function stopRefresh() {
+                if (refreshTimer) {
+                    clearTimeout(refreshTimer);
                 }
-            }, 1000);
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                }
+                document.title = statusTitle;
+            }
+            
+            // Start the refresh cycle only if job is still running
+            if ('@Model.Status' === 'Running' || '@Model.Status' === 'Queued') {
+                startRefresh();
+            }
+            
+            // Stop refresh if page becomes hidden (user navigates away)
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    stopRefresh();
+                } else if ('@Model.Status' === 'Running' || '@Model.Status' === 'Queued') {
+                    startRefresh();
+                }
+            });
         </script>
     }
 }
+
+<!-- Bootstrap Modal for Cancel Confirmation -->
+<div class="modal fade" id="cancelJobModal" tabindex="-1" aria-labelledby="cancelJobModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancelJobModalLabel">@Localizer["CancelJob"]</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @Localizer["CancelJobConfirm"]
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">@Localizer["Close"]</button>
+                <form asp-action="CancelBatchRestore" method="post" style="display: inline;">
+                    <input type="hidden" name="jobId" value="@Model.JobId" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="btn btn-warning">
+                        @Localizer["CancelJob"]
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

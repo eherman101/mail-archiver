@@ -10,18 +10,59 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Mobile Menu Toggle Click Outside to Close
+    const navbarToggler = document.querySelector('.navbar-toggler');
+    const navbarCollapse = document.querySelector('.navbar-collapse');
+    
+    if (navbarToggler && navbarCollapse) {
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const isClickInsideNavbar = navbarToggler.contains(event.target) || navbarCollapse.contains(event.target);
+            
+            if (!isClickInsideNavbar && navbarCollapse.classList.contains('show')) {
+                const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                    toggle: false
+                });
+                bsCollapse.hide();
+            }
+        });
+    }
+    
     // Tooltips aktivieren
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
     
-    // Auto-Dismiss für Alerts nach 5 Sekunden
+    // Auto-Dismiss für dismissible Alerts nach 5 Sekunden (außer persistent Alerts)
     setTimeout(() => {
-        const alerts = document.querySelectorAll('.alert');
+        const alerts = document.querySelectorAll('.alert.alert-dismissible:not(.alert-persistent)');
         alerts.forEach(alert => {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         });
     }, 5000);
+    
+    // Theme Toggle Funktionalität
+    const themeToggle = document.getElementById('theme-toggle');
+    const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark'
+        ? 'dark'
+        : (localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+    
+    if (themeToggle) {
+        themeToggle.innerHTML = currentTheme === 'dark' ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
+        themeToggle.addEventListener('click', function() {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            
+            if (newTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else {
+                document.documentElement.removeAttribute('data-theme');
+            }
+            localStorage.setItem('theme', newTheme);
+            
+            // Aktualisiere das Icon
+            this.innerHTML = newTheme === 'dark' ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
+        });
+    }
 });
 
 // Funktion zum Formatieren von Dateigröße

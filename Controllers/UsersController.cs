@@ -4,7 +4,9 @@ using MailArchiver.Models;
 using MailArchiver.Models.ViewModels;
 using MailArchiver.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 
 namespace MailArchiver.Controllers
 {
@@ -13,14 +15,20 @@ namespace MailArchiver.Controllers
         private readonly IUserService _userService;
         private readonly MailArchiverDbContext _context;
         private readonly ILogger<UsersController> _logger;
-        private readonly IAuthenticationService _authService;
+        private readonly MailArchiver.Services.IAuthenticationService _authService;
+        private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IAccessLogService _accessLogService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
-        public UsersController(IUserService userService, MailArchiverDbContext context, ILogger<UsersController> logger, IAuthenticationService authService)
+        public UsersController(IUserService userService, MailArchiverDbContext context, ILogger<UsersController> logger, MailArchiver.Services.IAuthenticationService authService, IStringLocalizer<SharedResource> localizer, IAccessLogService accessLogService, IServiceScopeFactory serviceScopeFactory)
         {
             _userService = userService;
             _context = context;
             _logger = logger;
             _authService = authService;
+            _localizer = localizer;
+            _accessLogService = accessLogService;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         // GET: Users
@@ -61,19 +69,22 @@ namespace MailArchiver.Controllers
         [AdminRequired]
         public async Task<IActionResult> Create(CreateUserViewModel model, string password)
         {
-            _logger.LogInformation("Create user called with Username: {Username}, Email: {Email}, Password length: {PasswordLength}", 
+            _logger.LogInformation("Create user called with Username: {Username}, Email: {Email}, Password length: {PasswordLength}",
                 model?.Username, model?.Email, password?.Length ?? 0);
 
             // Validate password
             if (string.IsNullOrWhiteSpace(password))
             {
                 _logger.LogWarning("Password is null or empty");
-                ModelState.AddModelError("password", "Password is required.");
+                ModelState.AddModelError("password", _localizer["PasswordRequired"]);
             }
-            else if (password.Length < 6)
+            else if (!ValidatePasswordRequirements(password, out var passwordErrors))
             {
-                _logger.LogWarning("Password too short: {Length}", password.Length);
-                ModelState.AddModelError("password", "Password must be at least 6 characters long.");
+                _logger.LogWarning("Password does not meet requirements");
+                foreach (var error in passwordErrors)
+                {
+                    ModelState.AddModelError("password", error);
+                }
             }
 
             // Check if username or email already exists only if other validations pass
@@ -82,19 +93,19 @@ namespace MailArchiver.Controllers
                 var existingUser = await _userService.GetUserByUsernameAsync(model.Username);
                 if (existingUser != null)
                 {
-                    ModelState.AddModelError("Username", "Username already exists.");
+                    ModelState.AddModelError("Username", _localizer["UsernameExists"]);
                 }
 
                 var existingEmailUser = await _userService.GetUserByEmailAsync(model.Email);
                 if (existingEmailUser != null)
                 {
-                    ModelState.AddModelError("Email", "Email already exists.");
+                    ModelState.AddModelError("Email", _localizer["EmailExists"]);
                 }
             }
 
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("ModelState is invalid. Errors: {Errors}", 
+                _logger.LogWarning("ModelState is invalid. Errors: {Errors}",
                     string.Join(", ", ModelState.SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}"))));
                 // Pass the password back to the view for form retention
                 ViewBag.Password = password;
@@ -105,18 +116,45 @@ namespace MailArchiver.Controllers
             {
                 // Create the user
                 var newUser = await _userService.CreateUserAsync(
-                    model.Username, 
-                    model.Email, 
+                    model.Username,
+                    model.Email,
                     password,
                     model.IsAdmin);
 
-                TempData["SuccessMessage"] = $"User '{newUser.Username}' created successfully.";
+                // Set self-manager flag if specified
+                if (model.IsSelfManager)
+                {
+                    newUser.IsSelfManager = true;
+                    await _userService.UpdateUserAsync(newUser);
+                }
+
+                    // Log the user creation action using a separate task to avoid DbContext concurrency issues
+                    var currentUsername = _authService.GetCurrentUserDisplayName(HttpContext);
+                    if (!string.IsNullOrEmpty(currentUsername))
+                    {
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                using var scope = _serviceScopeFactory.CreateScope();
+                                var accessLogService = scope.ServiceProvider.GetRequiredService<IAccessLogService>();
+                                await accessLogService.LogAccessAsync(currentUsername, AccessLogType.Account, 
+                                    searchParameters: $"Created user: {newUser.Username}");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error logging user creation action by {Username}", currentUsername);
+                            }
+                        });
+                    }
+
+                TempData["SuccessMessage"] = _localizer["UserCreatedSuccess", newUser.Username].Value;
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating user: {Message}", ex.Message);
-                ModelState.AddModelError("", $"An error occurred: {ex.Message}");
+                ModelState.AddModelError("", $"{_localizer["ErrorOccurred"]}: {ex.Message}");
                 return View(model);
             }
         }
@@ -131,35 +169,81 @@ namespace MailArchiver.Controllers
                 return NotFound();
             }
 
-            return View(user);
+            var model = new EditUserViewModel
+            {
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                IsAdmin = user.IsAdmin,
+                IsSelfManager = user.IsSelfManager,
+                IsActive = user.IsActive
+            };
+
+            ViewBag.IsOidcUser = !string.IsNullOrEmpty(user.OAuthRemoteUserId);
+            ViewBag.IsTwoFactorEnabled = user.IsTwoFactorEnabled;
+
+            return View(model);
         }
 
         // POST: Users/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [AdminRequired]
-        public async Task<IActionResult> Edit(int id, User user, string? newPassword)
+        public async Task<IActionResult> Edit(int id, EditUserViewModel model, string? newPassword)
         {
-            _logger.LogInformation("Edit POST called with id: {Id}, user: {User}, newPassword length: {PasswordLength}", 
-                id, user?.Username, newPassword?.Length ?? 0);
+            _logger.LogInformation("Edit POST called with id: {Id}, user: {User}, newPassword length: {PasswordLength}",
+                id, model?.Username, newPassword?.Length ?? 0);
 
-            if (id != user.Id)
+            if (id != model.Id)
             {
-                _logger.LogWarning("ID mismatch: route id {RouteId} != user.Id {UserId}", id, user?.Id);
+                _logger.LogWarning("ID mismatch: route id {RouteId} != model.Id {UserId}", id, model?.Id);
                 return NotFound();
             }
 
-            // Validate new password if provided
-            if (!string.IsNullOrWhiteSpace(newPassword) && newPassword.Length < 6)
+            // Get existing user to check if it's an OIDC user
+            var existingUser = await _userService.GetUserByIdAsync(id);
+            if (existingUser == null)
             {
-                _logger.LogWarning("New password too short: {Length}", newPassword.Length);
-                ModelState.AddModelError("newPassword", "Password must be at least 6 characters long.");
+                _logger.LogWarning("User not found with id: {Id}", id);
+                return NotFound();
+            }
+
+            ViewBag.IsOidcUser = !string.IsNullOrEmpty(existingUser.OAuthRemoteUserId);
+            ViewBag.IsTwoFactorEnabled = existingUser.IsTwoFactorEnabled;
+
+            // SECURITY: OIDC users cannot have passwords set
+            if (!string.IsNullOrEmpty(existingUser.OAuthRemoteUserId) && !string.IsNullOrWhiteSpace(newPassword))
+            {
+                _logger.LogWarning("Attempted to set password for OIDC user {Username} (ID: {UserId}) - denied", 
+                    existingUser.Username, existingUser.Id);
+                ModelState.AddModelError("newPassword", _localizer["OidcUserCannotHavePassword" ]);
+            }
+
+            // SECURITY: OIDC users cannot have their username changed
+            if (!string.IsNullOrEmpty(existingUser.OAuthRemoteUserId) && existingUser.Username != model.Username)
+            {
+                _logger.LogWarning("Attempted to change username for OIDC user {Username} (ID: {UserId}) - denied", 
+                    existingUser.Username, existingUser.Id);
+                ModelState.AddModelError("Username", _localizer["OidcUserCannotChangeUsername"]);
+            }
+
+            // Validate new password if provided (and not an OIDC user)
+            if (!string.IsNullOrWhiteSpace(newPassword))
+            {
+                if (!ValidatePasswordRequirements(newPassword, out var passwordErrors))
+                {
+                    _logger.LogWarning("New password does not meet requirements");
+                    foreach (var error in passwordErrors)
+                    {
+                        ModelState.AddModelError("newPassword", error);
+                    }
+                }
             }
 
             _logger.LogInformation("ModelState.IsValid: {IsValid}", ModelState.IsValid);
             if (!ModelState.IsValid)
             {
-                _logger.LogWarning("ModelState is invalid. Errors: {Errors}", 
+                _logger.LogWarning("ModelState is invalid. Errors: {Errors}",
                     string.Join(", ", ModelState.SelectMany(x => x.Value.Errors.Select(e => $"{x.Key}: {e.ErrorMessage}"))));
             }
 
@@ -167,32 +251,35 @@ namespace MailArchiver.Controllers
             {
                 try
                 {
-                    _logger.LogInformation("Attempting to get user with id: {Id}", id);
-                    var existingUser = await _userService.GetUserByIdAsync(id);
-                    if (existingUser == null)
-                    {
-                        _logger.LogWarning("User not found with id: {Id}", id);
-                        return NotFound();
-                    }
+                    _logger.LogInformation("Attempting to update user with id: {Id}", id);
 
                     // Check if trying to remove admin rights from the last admin
-                    if (existingUser.IsAdmin && !user.IsAdmin)
+                    if (existingUser.IsAdmin && !model.IsAdmin)
                     {
                         var adminCount = await _userService.GetAdminCountAsync();
                         if (adminCount <= 1)
                         {
                             _logger.LogWarning("Cannot remove admin rights. At least one admin must exist.");
-                            ModelState.AddModelError("IsAdmin", "Cannot remove admin rights. At least one admin must exist.");
-                            return View(user);
+                            ModelState.AddModelError("IsAdmin", _localizer["CannotRemoveAdmin"]);
+                            return View(model);
                         }
                     }
 
                     // Update user properties
                     _logger.LogInformation("Updating user properties for user: {Username}", existingUser.Username);
-                    existingUser.Username = user.Username;
-                    existingUser.Email = user.Email;
-                    existingUser.IsAdmin = user.IsAdmin;
-                    existingUser.IsActive = user.IsActive;
+                    existingUser.Username = model.Username;
+                    existingUser.Email = model.Email;
+                    existingUser.IsAdmin = model.IsAdmin;
+                    existingUser.IsSelfManager = model.IsSelfManager;
+                    existingUser.IsActive = model.IsActive;
+
+                    // SECURITY: When activating an OIDC user, also clear the RequiresApproval flag
+                    if (model.IsActive && existingUser.RequiresApproval)
+                    {
+                        existingUser.RequiresApproval = false;
+                        _logger.LogInformation("Clearing RequiresApproval flag for activated OIDC user {Username} (ID: {UserId})",
+                            existingUser.Username, existingUser.Id);
+                    }
 
                     // Update password if provided
                     if (!string.IsNullOrWhiteSpace(newPassword))
@@ -205,40 +292,89 @@ namespace MailArchiver.Controllers
                     var result = await _userService.UpdateUserAsync(existingUser);
                     if (result)
                     {
-                        _logger.LogInformation("User '{Username}' updated successfully.", existingUser.Username);
-                        TempData["SuccessMessage"] = $"User '{existingUser.Username}' updated successfully.";
-                        return RedirectToAction(nameof(Index));
+                    _logger.LogInformation("User '{Username}' updated successfully.", existingUser.Username);
+                    
+                    // Log the user update action using a separate task to avoid DbContext concurrency issues
+                    var currentUsername = _authService.GetCurrentUserDisplayName(HttpContext);
+                    if (!string.IsNullOrEmpty(currentUsername))
+                    {
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                using var scope = _serviceScopeFactory.CreateScope();
+                                var accessLogService = scope.ServiceProvider.GetRequiredService<IAccessLogService>();
+                                await accessLogService.LogAccessAsync(currentUsername, AccessLogType.Account, 
+                                    searchParameters: $"Updated user: {existingUser.Username}");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error logging user update action by {Username}", currentUsername);
+                            }
+                        });
+                    }
+                    
+                    TempData["SuccessMessage"] = _localizer["UserUpdated", existingUser.Username].Value;
+                    return RedirectToAction(nameof(Index));
                     }
                     else
                     {
                         _logger.LogWarning("Failed to update user: {Username}", existingUser.Username);
-                        ModelState.AddModelError("", "Failed to update user.");
-                        return View(user);
+                        ModelState.AddModelError("", _localizer["UserUpdateFailed"]);
+                        return View(model);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error updating user: {Message}", ex.Message);
-                    ModelState.AddModelError("", $"An error occurred: {ex.Message}");
-                    return View(user);
+                    ModelState.AddModelError("", $"{_localizer["ErrorOccurred"]}: {ex.Message}");
+                    return View(model);
                 }
             }
 
             // If we get here, something went wrong with validation or model binding
-            // Let's get the user again to ensure we have all the data for the view
+            // Preserve the values that the user entered in the form
             _logger.LogInformation("Returning view with validation errors");
-            var currentUser = await _userService.GetUserByIdAsync(id);
-            if (currentUser != null)
+            return View(model);
+        }
+
+        // POST: Users/ResetTwoFactor/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [AdminRequired]
+        public async Task<IActionResult> ResetTwoFactor(int id)
+        {
+            try
             {
-                // Preserve the values that the user entered in the form
-                currentUser.Username = user.Username;
-                currentUser.Email = user.Email;
-                currentUser.IsAdmin = user.IsAdmin;
-                currentUser.IsActive = user.IsActive;
-                return View(currentUser);
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user == null)
+                {
+                    TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                // Reset 2FA properties
+                user.IsTwoFactorEnabled = false;
+                user.TwoFactorSecret = null;
+                user.TwoFactorBackupCodes = null;
+
+                var result = await _userService.UpdateUserAsync(user);
+                if (result)
+                {
+                    TempData["SuccessMessage"] = _localizer["TwoFactorResetSuccess", user.Username].Value;
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = _localizer["TwoFactorResetFail", user.Username].Value;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resetting 2FA for user: {Message}", ex.Message);
+                TempData["ErrorMessage"] = $"{_localizer["ErrorOccurred"]}: {ex.Message}";
             }
 
-            return View(user);
+            return RedirectToAction(nameof(Index));
         }
 
         // POST: Users/Delete/5
@@ -252,7 +388,7 @@ namespace MailArchiver.Controllers
                 var user = await _userService.GetUserByIdAsync(id);
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "User not found.";
+                    TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -262,7 +398,7 @@ namespace MailArchiver.Controllers
                     var adminCount = await _userService.GetAdminCountAsync();
                     if (adminCount <= 1)
                     {
-                        TempData["ErrorMessage"] = "Cannot delete the last admin user. At least one admin must exist.";
+                        TempData["ErrorMessage"] = _localizer["UserDeleteAdmin"].Value;
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -270,17 +406,37 @@ namespace MailArchiver.Controllers
                 var result = await _userService.DeleteUserAsync(id);
                 if (result)
                 {
-                    TempData["SuccessMessage"] = $"User '{user.Username}' deleted successfully.";
+                    // Log the user deletion action using a separate task to avoid DbContext concurrency issues
+                    var currentUsername = _authService.GetCurrentUserDisplayName(HttpContext);
+                    if (!string.IsNullOrEmpty(currentUsername))
+                    {
+                        Task.Run(async () =>
+                        {
+                            try
+                            {
+                                using var scope = _serviceScopeFactory.CreateScope();
+                                var accessLogService = scope.ServiceProvider.GetRequiredService<IAccessLogService>();
+                                await accessLogService.LogAccessAsync(currentUsername, AccessLogType.Account, 
+                                    searchParameters: $"Deleted user: {user.Username}");
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error logging user deletion action by {Username}", currentUsername);
+                            }
+                        });
+                    }
+                    
+                    TempData["SuccessMessage"] = _localizer["UserDeleteSuccess", user.Username].Value;
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = $"Failed to delete user '{user.Username}'.";
+                    TempData["ErrorMessage"] = _localizer["UserDeleteFail", user.Username].Value;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting user: {Message}", ex.Message);
-                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                TempData["ErrorMessage"] = $"{_localizer["ErrorOccurred"]}: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
@@ -293,13 +449,13 @@ namespace MailArchiver.Controllers
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
+                TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
                 return RedirectToAction(nameof(Index));
             }
 
             // Get all mail accounts
-            var allAccounts = await _context.MailAccounts.ToListAsync();
-            
+            var allAccounts = await _context.MailAccounts.OrderBy(a => a.Name).ToListAsync();
+
             // Get currently assigned accounts
             var assignedAccounts = await _userService.GetUserMailAccountsAsync(id);
             var assignedAccountIds = assignedAccounts.Select(a => a.Id).ToList();
@@ -325,7 +481,7 @@ namespace MailArchiver.Controllers
                 var user = await _userService.GetUserByIdAsync(id);
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "User not found.";
+                    TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -351,12 +507,12 @@ namespace MailArchiver.Controllers
                     }
                 }
 
-                TempData["SuccessMessage"] = $"Mail account assignments for user '{user.Username}' updated successfully.";
+                TempData["SuccessMessage"] = _localizer["AccountAssignmentSuccess", user.Username].Value;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error updating mail account assignments: {Message}", ex.Message);
-                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                TempData["ErrorMessage"] = $"{_localizer["ErrorOccurred"]}: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
@@ -367,90 +523,122 @@ namespace MailArchiver.Controllers
         public async Task<IActionResult> ChangePassword()
         {
             // Get the current user's information
-            var currentUsername = _authService.GetCurrentUser(HttpContext);
+            var currentUsername = _authService.GetCurrentUserDisplayName(HttpContext);
             var currentUser = await _userService.GetUserByUsernameAsync(currentUsername);
             if (currentUser == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
+                TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
+                return RedirectToAction("Index", "Home");
+            }
+
+            // SECURITY: OIDC users cannot change their password (they authenticate via OIDC provider)
+            if (!string.IsNullOrEmpty(currentUser.OAuthRemoteUserId))
+            {
+                TempData["ErrorMessage"] = _localizer["OidcUserCannotChangePassword"].Value;
                 return RedirectToAction("Index", "Home");
             }
 
             // For security reasons, we don't want to pass the full user object to the view
             // Instead, we'll create a simple view model with just the username
             ViewBag.Username = currentUser.Username;
+            ViewBag.UserHasPassword = !string.IsNullOrEmpty(currentUser.PasswordHash);
             return View();
         }
 
         // POST: Users/ChangePassword
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword, string confirmNewPassword)
+        public async Task<IActionResult> ChangePassword(string? currentPassword, string newPassword, string confirmNewPassword)
         {
             // Get the current user's information
-            var currentUsername = _authService.GetCurrentUser(HttpContext);
+            var currentUsername = _authService.GetCurrentUserDisplayName(HttpContext);
             var currentUser = await _userService.GetUserByUsernameAsync(currentUsername);
             if (currentUser == null)
             {
-                TempData["ErrorMessage"] = "User not found.";
+                TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
                 return RedirectToAction("Index", "Home");
             }
 
+            // Check if password change is forced
+            var mustChangePassword = HttpContext.Session.GetString("MustChangePassword") == "true";
+            var userHasPassword = !string.IsNullOrEmpty(currentUser.PasswordHash);
+
             // Validate input
-            if (string.IsNullOrWhiteSpace(currentPassword))
+            if (userHasPassword && string.IsNullOrWhiteSpace(currentPassword))
             {
-                ModelState.AddModelError("currentPassword", "Current password is required.");
+                ModelState.AddModelError("currentPassword", _localizer["PasswordCurrentRequired"]);
             }
 
             if (string.IsNullOrWhiteSpace(newPassword))
             {
-                ModelState.AddModelError("newPassword", "New password is required.");
+                ModelState.AddModelError("newPassword", _localizer["PasswordNewRequired"]);
             }
-            else if (newPassword.Length < 6)
+            else if (!ValidatePasswordRequirements(newPassword, out var passwordErrors))
             {
-                ModelState.AddModelError("newPassword", "Password must be at least 6 characters long.");
+                foreach (var error in passwordErrors)
+                {
+                    ModelState.AddModelError("newPassword", error);
+                }
             }
             else if (newPassword != confirmNewPassword)
             {
-                ModelState.AddModelError("confirmNewPassword", "New password and confirmation do not match.");
+                ModelState.AddModelError("confirmNewPassword", _localizer["PasswordNotMatch"]);
             }
 
             // If validation passes, check current password
             if (ModelState.IsValid)
             {
-                // Verify current password
-                var isCurrentPasswordValid = await _userService.AuthenticateUserAsync(currentUser.Username, currentPassword);
+                // Verify current password if user has a password
+                var isCurrentPasswordValid = !userHasPassword || await _userService.AuthenticateUserAsync(currentUser.Username, currentPassword);
                 if (!isCurrentPasswordValid)
                 {
-                    ModelState.AddModelError("currentPassword", "Current password is incorrect.");
+                    ModelState.AddModelError("currentPassword", _localizer["PasswordCurrentIncorrect"]);
                 }
                 else
                 {
-                    // Update password
-                    try
+                    // If forced password change, ensure new password is different from current
+                    if (mustChangePassword && currentPassword == newPassword)
                     {
-                        currentUser.PasswordHash = _userService.HashPassword(newPassword);
-                        var result = await _userService.UpdateUserAsync(currentUser);
-                        
-                        if (result)
-                        {
-                            TempData["SuccessMessage"] = "Password changed successfully.";
-                            return RedirectToAction("Index", "Home");
-                        }
-                        else
-                        {
-                            ModelState.AddModelError("", "Failed to update password.");
-                        }
+                        ModelState.AddModelError("newPassword", _localizer["PasswordMustBeDifferent"]);
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        _logger.LogError(ex, "Error updating password for user: {Username}", currentUser.Username);
-                        ModelState.AddModelError("", $"An error occurred: {ex.Message}");
+                        // Update password
+                        try
+                        {
+                            currentUser.PasswordHash = _userService.HashPassword(newPassword);
+                            var result = await _userService.UpdateUserAsync(currentUser);
+
+                            if (result)
+                            {
+                                // Clear the forced password change flag
+                                if (mustChangePassword)
+                                {
+                                    HttpContext.Session.Remove("MustChangePassword");
+                                    _logger.LogInformation("User {Username} successfully changed password after initial setup", currentUser.Username);
+                                }
+                                
+                                TempData["SuccessMessage"] = _localizer["PasswordChangeSuccess"].Value;
+                                return RedirectToAction("Index", "Home");
+                            }
+                            else
+                            {
+                                ModelState.AddModelError("", _localizer["PasswordChangeFail"]);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error updating password for user: {Username}", currentUser.Username);
+                            ModelState.AddModelError("", $"{_localizer["ErrorOccurred"]}: {ex.Message}");
+                        }
                     }
                 }
             }
 
             // If we get here, something went wrong
             ViewBag.Username = currentUser.Username;
+            ViewBag.MustChangePassword = mustChangePassword;
+            ViewBag.UserHasPassword = !string.IsNullOrEmpty(currentUser.PasswordHash);
             return View();
         }
 
@@ -465,7 +653,7 @@ namespace MailArchiver.Controllers
                 var user = await _userService.GetUserByIdAsync(id);
                 if (user == null)
                 {
-                    TempData["ErrorMessage"] = "User not found.";
+                    TempData["ErrorMessage"] = _localizer["UserNotFound"].Value;
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -475,7 +663,7 @@ namespace MailArchiver.Controllers
                     var adminCount = await _userService.GetAdminCountAsync();
                     if (adminCount <= 1)
                     {
-                        TempData["ErrorMessage"] = "Cannot disable the last admin user. At least one admin must exist.";
+                        TempData["ErrorMessage"] = _localizer["CannotDisableAdmin"].Value;
                         return RedirectToAction(nameof(Index));
                     }
                 }
@@ -483,20 +671,53 @@ namespace MailArchiver.Controllers
                 var result = await _userService.SetUserActiveStatusAsync(id, !user.IsActive);
                 if (result)
                 {
-                    TempData["SuccessMessage"] = $"User '{user.Username}' has been {(user.IsActive ? "disabled" : "enabled")}.";
+                    TempData["SuccessMessage"] = _localizer["UserChangeActiveSuccess", user.Username, (user.IsActive ? _localizer["UserEnabled"] : _localizer["UserDisabled"])].Value;
                 }
                 else
                 {
-                    TempData["ErrorMessage"] = $"Failed to {(user.IsActive ? "disable" : "enable")} user '{user.Username}'.";
+                    TempData["ErrorMessage"] = _localizer["UserChangeActiveFail", user.Username, (user.IsActive ? _localizer["UserEnabled"] : _localizer["UserDisabled"])].Value;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error toggling user active status: {Message}", ex.Message);
-                TempData["ErrorMessage"] = $"An error occurred: {ex.Message}";
+                TempData["ErrorMessage"] = $"{_localizer["ErrorOccurred"]}: {ex.Message}";
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // Helper method to validate password requirements
+        private bool ValidatePasswordRequirements(string password, out List<string> errors)
+        {
+            errors = new List<string>();
+            
+            if (password.Length < 10)
+            {
+                errors.Add(_localizer["PasswordMinLength"].Value);
+            }
+            
+            if (!password.Any(char.IsUpper))
+            {
+                errors.Add(_localizer["PasswordRequiresUppercase"].Value);
+            }
+            
+            if (!password.Any(char.IsLower))
+            {
+                errors.Add(_localizer["PasswordRequiresLowercase"].Value);
+            }
+            
+            if (!password.Any(char.IsDigit))
+            {
+                errors.Add(_localizer["PasswordRequiresNumber"].Value);
+            }
+            
+            if (!password.Any(ch => !char.IsLetterOrDigit(ch)))
+            {
+                errors.Add(_localizer["PasswordRequiresSpecialChar"].Value);
+            }
+            
+            return errors.Count == 0;
         }
     }
 }

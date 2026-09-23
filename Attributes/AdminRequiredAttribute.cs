@@ -8,7 +8,7 @@ namespace MailArchiver.Attributes
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var authService = context.HttpContext.RequestServices.GetService<IAuthenticationService>();
+            var authService = context.HttpContext.RequestServices.GetService<MailArchiver.Services.IAuthenticationService>();
             
             // First check if user is authenticated
             if (authService == null || !authService.IsAuthenticated(context.HttpContext))
@@ -21,14 +21,14 @@ namespace MailArchiver.Attributes
             
             // Then check if user is admin
             var isAdmin = authService.IsCurrentUserAdmin(context.HttpContext);
-            var username = authService.GetCurrentUser(context.HttpContext);
+            var userId = authService.GetCurrentUserId(context.HttpContext);
             
             if (!isAdmin)
             {
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<AdminRequiredAttribute>>();
                 if (logger != null)
                 {
-                    logger.LogWarning("User {Username} attempted to access admin-only resource but was denied", username);
+                    logger.LogWarning("User {UserId} attempted to access admin-only resource but was denied", userId);
                 }
                 
                 // User is authenticated but not admin - show access denied
@@ -40,7 +40,7 @@ namespace MailArchiver.Attributes
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<AdminRequiredAttribute>>();
                 if (logger != null)
                 {
-                    logger.LogDebug("User {Username} is admin, granting access", username);
+                    logger.LogDebug("User {UserId} is admin, granting access", userId);
                 }
             }
 

@@ -10,7 +10,7 @@ namespace MailArchiver.Attributes
     {
         public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            var authService = context.HttpContext.RequestServices.GetService<IAuthenticationService>();
+            var authService = context.HttpContext.RequestServices.GetService<MailArchiver.Services.IAuthenticationService>();
             
             // First check if user is authenticated
             if (authService == null || !authService.IsAuthenticated(context.HttpContext))
@@ -80,9 +80,16 @@ namespace MailArchiver.Attributes
                 logger.LogInformation("Email {EmailId} belongs to account {AccountId}", email.Id, email.MailAccountId);
             }
             // Check if the user has access to this email's account
-            var username = authService.GetCurrentUser(context.HttpContext);
-            var user = await userService.GetUserByUsernameAsync(username);
+            var userId = authService.GetCurrentUserId(context.HttpContext);
+            if (!userId.HasValue)
+            {
+                logger.LogWarning("Unable to determine user ID for email access check");
+                context.Result = new RedirectToActionResult("AccessDenied", "Auth", null);
+                return;
+            }
             
+            var user = await userService.GetUserByIdAsync(userId.Value);
+
             if (user == null)
             {
                 context.Result = new RedirectToActionResult("AccessDenied", "Auth", null);
@@ -97,8 +104,8 @@ namespace MailArchiver.Attributes
                 var accessLogger = context.HttpContext.RequestServices.GetService<ILogger<EmailAccessRequiredAttribute>>();
                 if (accessLogger != null)
                 {
-                    accessLogger.LogWarning("User {Username} (ID: {UserId}) attempted to access email {EmailId} from account {AccountId} but was denied access", 
-                        username, user.Id, email.Id, email.MailAccountId);
+                    accessLogger.LogWarning("User ID {UserId} attempted to access email {EmailId} from account {AccountId} but was denied access", 
+                        user.Id, email.Id, email.MailAccountId);
                 }
                 
                 // Return NotFound instead of AccessDenied to avoid revealing existence

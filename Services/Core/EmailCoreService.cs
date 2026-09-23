@@ -1,0 +1,2383 @@
+using MailArchiver.Data;
+using MailArchiver.Models;
+using MailArchiver.Models.ViewModels;
+using MailArchiver.Services.Shared;
+using MailArchiver.Utilities;
+using MailArchiver.ViewModels;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using MimeKit;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace MailArchiver.Services.Core
+{
+    /// <summary>
+    /// Core email service providing provider-independent functionality
+    /// Handles search, export, archiving, and dashboard operations
+    /// </summary>
+    public class EmailCoreService
+    {
+        private readonly MailArchiverDbContext _context;
+        private readonly ILogger<EmailCoreService> _logger;
+        private readonly DateTimeHelper _dateTimeHelper;
+        private readonly BatchOperationOptions _batchOptions;
+        private readonly DashboardOptions _dashboardOptions;
+        private readonly IMemoryCache _memoryCache;
+
+        public EmailCoreService(
+            MailArchiverDbContext context,
+            ILogger<EmailCoreService> logger,
+            DateTimeHelper dateTimeHelper,
+            IOptions<BatchOperationOptions> batchOptions,
+            IOptions<DashboardOptions>? dashboardOptions = null,
+            IMemoryCache? memoryCache = null)
+        {
+            _context = context;
+            _logger = logger;
+            _dateTimeHelper = dateTimeHelper;
+            _batchOptions = batchOptions.Value;
+            _dashboardOptions = dashboardOptions?.Value ?? new DashboardOptions();
+            _memoryCache = memoryCache ?? new MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions());
+        }
+
+        #region Search Methods
+
+        public async Task<(List<ArchivedEmail> Emails, int TotalCount)> SearchEmailsAsync(
+            string searchTerm,
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? accountId,
+            string folderName,
+            bool? isOutgoing,
+            int skip,
+            int take,
+            List<int> allowedAccountIds = null,
+            string sortBy = "SentDate",
+            string sortOrder = "desc")
+        {
+            var startTime = DateTime.UtcNow;
+
+            // Validate pagination parameters to prevent excessive data loading
+            if (take > 1000) take = 1000;
+            if (skip < 0) skip = 0;
+
+            // Central canonicalization of sort parameters: any unknown/invalid
+            // value falls back to the defaults. This is the single source of
+            // truth — callers no longer need to pre-validate, and the raw
+            // values are never interpolated into SQL (defense-in-depth against
+            // SQL injection via sortBy/sortOrder).
+            sortBy = CanonicalizeSortBy(sortBy);
+            sortOrder = CanonicalizeSortOrder(sortOrder);
+
+            try
+            {
+                return await SearchEmailsOptimizedAsync(searchTerm, fromDate, toDate, accountId, folderName, isOutgoing, skip, take, allowedAccountIds, sortBy, sortOrder);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Optimized search failed, falling back to Entity Framework search");
+                return await SearchEmailsEFAsync(searchTerm, fromDate, toDate, accountId, folderName, isOutgoing, skip, take, allowedAccountIds);
+            }
+        }
+
+        private async Task<(List<ArchivedEmail> Emails, int TotalCount)> SearchEmailsOptimizedAsync(
+            string searchTerm,
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? accountId,
+            string folderName,
+            bool? isOutgoing,
+            int skip,
+            int take,
+            List<int> allowedAccountIds = null,
+            string sortBy = "SentDate",
+            string sortOrder = "desc")
+        {
+            var startTime = DateTime.UtcNow;
+            var whereConditions = new List<string>();
+            var parameters = new List<Npgsql.NpgsqlParameter>();
+            var paramCounter = 0;
+
+            // Full-text search condition
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                var (tsQuery, phrases, fieldSearches, fieldPhrases) = ParseSearchTermForTsQuery(searchTerm);
+                var searchConditions = new List<string>();
+
+                if (!string.IsNullOrEmpty(tsQuery))
+                {
+                    searchConditions.Add($@"
+                        to_tsvector('simple', 
+                            COALESCE(""Subject"", '') || ' ' || 
+                            COALESCE(""Body"", '') || ' ' || 
+                            COALESCE(""From"", '') || ' ' || 
+                            COALESCE(""To"", '') || ' ' || 
+                            COALESCE(""Cc"", '') || ' ' || 
+                            COALESCE(""Bcc"", '')) 
+                        @@ to_tsquery('simple', @param{paramCounter})");
+                    parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", tsQuery));
+                    paramCounter++;
+                }
+
+                foreach (var phrase in phrases)
+                {
+                    var phraseTsQuery = BuildPhraseTsQuery(phrase);
+                    if (!string.IsNullOrEmpty(phraseTsQuery))
+                    {
+                        searchConditions.Add($@"(
+                        to_tsvector('simple', 
+                            COALESCE(""Subject"", '') || ' ' || 
+                            COALESCE(""Body"", '') || ' ' || 
+                            COALESCE(""From"", '') || ' ' || 
+                            COALESCE(""To"", '') || ' ' || 
+                            COALESCE(""Cc"", '') || ' ' || 
+                            COALESCE(""Bcc"", '')) 
+                        @@ to_tsquery('simple', @param{paramCounter})
+                        AND (
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""Subject"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""Body"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""From"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""To"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""Cc"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter + 1}) IN LOWER(COALESCE(""Bcc"", ''))) > 0
+                    ))");
+                        parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", phraseTsQuery));
+                        paramCounter++;
+                        parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", phrase));
+                        paramCounter++;
+                    }
+                    else
+                    {
+                        searchConditions.Add($@"(
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""Subject"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""Body"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""From"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""To"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""Cc"", ''))) > 0 OR
+                        POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""Bcc"", ''))) > 0
+                    )");
+                        parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", phrase));
+                        paramCounter++;
+                    }
+                }
+
+                foreach (var fieldSearch in fieldSearches)
+                {
+                    var field = fieldSearch.Key;
+                    var terms = fieldSearch.Value;
+                    var columnName = GetColumnNameForField(field);
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        foreach (var term in terms)
+                        {
+                            searchConditions.Add($@"
+                                POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""{columnName}"", ''))) > 0");
+                            parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", term));
+                            paramCounter++;
+                        }
+                    }
+                }
+
+                foreach (var fieldPhrase in fieldPhrases)
+                {
+                    var field = fieldPhrase.Key;
+                    var currentFieldPhrases = fieldPhrase.Value;
+                    var columnName = GetColumnNameForField(field);
+
+                    if (!string.IsNullOrEmpty(columnName))
+                    {
+                        foreach (var phrase in currentFieldPhrases)
+                        {
+                            searchConditions.Add($@"
+                                POSITION(LOWER(@param{paramCounter}) IN LOWER(COALESCE(""{columnName}"", ''))) > 0");
+                            parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", phrase));
+                            paramCounter++;
+                        }
+                    }
+                }
+
+                if (searchConditions.Any())
+                {
+                    whereConditions.Add($"({string.Join(" AND ", searchConditions)})");
+                }
+            }
+
+            // Account filtering
+            if (accountId.HasValue)
+            {
+                if (allowedAccountIds != null && !allowedAccountIds.Contains(accountId.Value))
+                {
+                    _logger.LogWarning("User attempted to access account {AccountId} which is not in their allowed accounts list", accountId.Value);
+                    return (new List<ArchivedEmail>(), 0);
+                }
+
+                whereConditions.Add($@"""MailAccountId"" = @param{paramCounter}");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", accountId.Value));
+                paramCounter++;
+            }
+            else if (allowedAccountIds != null)
+            {
+                if (allowedAccountIds.Any())
+                {
+                    whereConditions.Add($@"""MailAccountId"" = ANY(@param{paramCounter})");
+                    parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", allowedAccountIds.ToArray()));
+                    paramCounter++;
+                }
+                else
+                {
+                    _logger.LogWarning("User has no allowed accounts, returning empty result set");
+                    return (new List<ArchivedEmail>(), 0);
+                }
+            }
+
+            // Date filtering
+            if (fromDate.HasValue)
+            {
+                whereConditions.Add($@"""SentDate"" >= @param{paramCounter}");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", fromDate.Value));
+                paramCounter++;
+            }
+
+            if (toDate.HasValue)
+            {
+                var endDate = toDate.Value.AddDays(1).AddSeconds(-1);
+                whereConditions.Add($@"""SentDate"" <= @param{paramCounter}");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", endDate));
+                paramCounter++;
+            }
+
+            if (isOutgoing.HasValue)
+            {
+                whereConditions.Add($@"""IsOutgoing"" = @param{paramCounter}");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{paramCounter}", isOutgoing.Value));
+                paramCounter++;
+            }
+
+            // Folder filtering: selecting a folder also shows the emails of all descendant
+            // folders (path-boundary prefix match). Intermediate folders rendered in the
+            // folder tree can hold no emails themselves; an exact-only match would return
+            // an empty result for such parents. Kept in sync with SearchEmailsEFAsync.
+            if (!string.IsNullOrEmpty(folderName))
+            {
+                var exactParam = paramCounter;
+                var slashParam = paramCounter + 1;
+                var backslashParam = paramCounter + 2;
+                var dotParam = paramCounter + 3;
+                paramCounter += 4;
+
+                // Escape LIKE special chars (\ % _) in the literal part, then append the
+                // wildcard LAST so it isn't escaped. The separator must be escaped too:
+                // a backslash separator is itself the default LIKE escape character, so an
+                // unescaped "…\%" would read as literal '%' instead of "prefix + anything".
+                const string esc = "\\";
+                string Esc(string s) => s.Replace(esc, esc + esc).Replace("%", esc + "%").Replace("_", esc + "_");
+
+                whereConditions.Add($@"(""FolderName"" = @param{exactParam} OR ""FolderName"" LIKE @param{slashParam} ESCAPE '{esc}' OR ""FolderName"" LIKE @param{backslashParam} ESCAPE '{esc}' OR ""FolderName"" LIKE @param{dotParam} ESCAPE '{esc}')");
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{exactParam}", folderName));
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{slashParam}",     Esc(folderName + "/")  + "%"));
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{backslashParam}", Esc(folderName + "\\") + "%"));
+                parameters.Add(new Npgsql.NpgsqlParameter($"@param{dotParam}",       Esc(folderName + ".")  + "%"));
+            }
+
+            var whereClause = whereConditions.Any() ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+            // Count query
+            var countSql = $@"
+                SELECT COUNT(*)
+                FROM mail_archiver.""ArchivedEmails""
+                {whereClause}";
+
+            var totalCount = await ExecuteScalarQueryAsync<int>(countSql, CloneParameters(parameters));
+
+            // Build ORDER BY clause
+            var (orderByClause, sortColumn, isTimestampSort) = GetOrderByClause(sortBy, sortOrder);
+
+            // Parametrize LIMIT/OFFSET rather than interpolating integers, so
+            // the data query inherits the same SQL-injection defense as the
+            // filter parameters above even if a future caller skips clamping.
+            var limitParam = new Npgsql.NpgsqlParameter($"@param{paramCounter}", take);
+            var offsetParam = new Npgsql.NpgsqlParameter($"@param{paramCounter + 1}", skip);
+            var limitPlaceholder = $"@param{paramCounter}";
+            var offsetPlaceholder = $"@param{paramCounter + 1}";
+            paramCounter += 2;
+
+            // For timestamp sorts (SentDate/ReceivedDate), use a MATERIALIZED CTE to force the planner
+            // to use the GIN full-text index for the FTS predicate instead of doing a backward SentDate
+            // index scan with per-row re-tokenization of the body. The CTE selects only (Id, SortColumn)
+            // so no body detoasting happens during matching; the body is only detoasted for the final page.
+            // For text sorts, keep the flat form (no backward-index-scan antipattern there).
+            string dataSql;
+            if (isTimestampSort)
+            {
+                dataSql = $@"
+                    WITH ""matched"" AS MATERIALIZED (
+                        SELECT e.""Id"", e.""{sortColumn}""
+                        FROM mail_archiver.""ArchivedEmails"" e
+                        {whereClause}
+                    ),
+                    ""page"" AS (
+                        SELECT m.""Id"", m.""{sortColumn}""
+                        FROM ""matched"" m
+                        ORDER BY m.""{sortColumn}"" {(sortOrder?.ToLower() == "asc" ? "ASC" : "DESC")}
+                        LIMIT {limitPlaceholder} OFFSET {offsetPlaceholder}
+                    )
+                    SELECT e.""Id"", e.""MailAccountId"", e.""MessageId"", e.""Subject"", e.""Body"", e.""HtmlBody"",
+                           e.""From"", e.""To"", e.""Cc"", e.""Bcc"", e.""SentDate"", e.""ReceivedDate"",
+                           e.""IsOutgoing"", e.""HasAttachments"", e.""FolderName"", e.""IsLocked"",
+                           ma.""Id"" as ""AccountId"", ma.""Name"" as ""AccountName"", ma.""EmailAddress"" as ""AccountEmail""
+                    FROM ""page"" p
+                    INNER JOIN mail_archiver.""ArchivedEmails"" e ON e.""Id"" = p.""Id""
+                    INNER JOIN mail_archiver.""MailAccounts"" ma ON e.""MailAccountId"" = ma.""Id""
+                    ORDER BY p.""{sortColumn}"" {(sortOrder?.ToLower() == "asc" ? "ASC" : "DESC")}";
+            }
+            else
+            {
+                dataSql = $@"
+                    SELECT e.""Id"", e.""MailAccountId"", e.""MessageId"", e.""Subject"", e.""Body"", e.""HtmlBody"",
+                           e.""From"", e.""To"", e.""Cc"", e.""Bcc"", e.""SentDate"", e.""ReceivedDate"",
+                           e.""IsOutgoing"", e.""HasAttachments"", e.""FolderName"", e.""IsLocked"",
+                           ma.""Id"" as ""AccountId"", ma.""Name"" as ""AccountName"", ma.""EmailAddress"" as ""AccountEmail""
+                    FROM mail_archiver.""ArchivedEmails"" e
+                    INNER JOIN mail_archiver.""MailAccounts"" ma ON e.""MailAccountId"" = ma.""Id""
+                    {whereClause}
+                    {orderByClause}
+                    LIMIT {limitPlaceholder} OFFSET {offsetPlaceholder}";
+            }
+
+            parameters.Add(limitParam);
+            parameters.Add(offsetParam);
+
+            var emails = await ExecuteDataQueryAsync(dataSql, CloneParameters(parameters));
+
+            return (emails, totalCount);
+        }
+
+        private async Task<T> ExecuteScalarQueryAsync<T>(string sql, List<Npgsql.NpgsqlParameter> parameters)
+        {
+            using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = new Npgsql.NpgsqlCommand(sql, connection);
+            foreach (var parameter in parameters)
+            {
+                command.Parameters.Add(parameter);
+            }
+
+            var result = await command.ExecuteScalarAsync();
+            return (T)Convert.ChangeType(result, typeof(T));
+        }
+
+        private async Task<List<ArchivedEmail>> ExecuteDataQueryAsync(string sql, List<Npgsql.NpgsqlParameter> parameters)
+        {
+            var emails = new List<ArchivedEmail>();
+
+            using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync();
+
+            using var command = new Npgsql.NpgsqlCommand(sql, connection);
+            foreach (var parameter in parameters)
+            {
+                command.Parameters.Add(parameter);
+            }
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var email = new ArchivedEmail
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                    MailAccountId = reader.GetInt32(reader.GetOrdinal("MailAccountId")),
+                    MessageId = reader.IsDBNull(reader.GetOrdinal("MessageId")) ? "" : reader.GetString(reader.GetOrdinal("MessageId")),
+                    Subject = reader.IsDBNull(reader.GetOrdinal("Subject")) ? "" : reader.GetString(reader.GetOrdinal("Subject")),
+                    Body = reader.IsDBNull(reader.GetOrdinal("Body")) ? "" : reader.GetString(reader.GetOrdinal("Body")),
+                    HtmlBody = reader.IsDBNull(reader.GetOrdinal("HtmlBody")) ? "" : reader.GetString(reader.GetOrdinal("HtmlBody")),
+                    From = reader.IsDBNull(reader.GetOrdinal("From")) ? "" : reader.GetString(reader.GetOrdinal("From")),
+                    To = reader.IsDBNull(reader.GetOrdinal("To")) ? "" : reader.GetString(reader.GetOrdinal("To")),
+                    Cc = reader.IsDBNull(reader.GetOrdinal("Cc")) ? "" : reader.GetString(reader.GetOrdinal("Cc")),
+                    Bcc = reader.IsDBNull(reader.GetOrdinal("Bcc")) ? "" : reader.GetString(reader.GetOrdinal("Bcc")),
+                    SentDate = reader.GetDateTime(reader.GetOrdinal("SentDate")),
+                    ReceivedDate = reader.GetDateTime(reader.GetOrdinal("ReceivedDate")),
+                    IsOutgoing = reader.GetBoolean(reader.GetOrdinal("IsOutgoing")),
+                    HasAttachments = reader.GetBoolean(reader.GetOrdinal("HasAttachments")),
+                    FolderName = reader.IsDBNull(reader.GetOrdinal("FolderName")) ? "" : reader.GetString(reader.GetOrdinal("FolderName")),
+                    IsLocked = reader.GetBoolean(reader.GetOrdinal("IsLocked")),
+                    MailAccount = new MailAccount
+                    {
+                        Id = reader.GetInt32(reader.GetOrdinal("AccountId")),
+                        Name = reader.IsDBNull(reader.GetOrdinal("AccountName")) ? "" : reader.GetString(reader.GetOrdinal("AccountName")),
+                        EmailAddress = reader.IsDBNull(reader.GetOrdinal("AccountEmail")) ? "" : reader.GetString(reader.GetOrdinal("AccountEmail"))
+                    }
+                };
+                emails.Add(email);
+            }
+
+            return emails;
+        }
+
+        private (string tsQuery, List<string> phrases, Dictionary<string, List<string>> fieldSearches, Dictionary<string, List<string>> fieldPhrases) ParseSearchTermForTsQuery(string searchTerm)
+        {
+            if (string.IsNullOrWhiteSpace(searchTerm))
+                return (null, new List<string>(), new Dictionary<string, List<string>>(), new Dictionary<string, List<string>>());
+
+            var phrases = new List<string>();
+            var individualWords = new List<string>();
+            var fieldSearches = new Dictionary<string, List<string>>();
+            var fieldPhrases = new Dictionary<string, List<string>>();
+            var validFields = new HashSet<string> { "subject", "body", "from", "to" };
+
+            var regex = new Regex(@"""([^""]*)""|(\w+):(""([^""]*)""|(\S+))|(\S+)", RegexOptions.None);
+            var matches = regex.Matches(searchTerm);
+
+            foreach (Match match in matches)
+            {
+                if (match.Groups[1].Success)
+                {
+                    var phrase = match.Groups[1].Value.Trim();
+                    if (!string.IsNullOrEmpty(phrase))
+                        phrases.Add(phrase);
+                }
+                else if (match.Groups[2].Success)
+                {
+                    var field = match.Groups[2].Value.ToLower().Trim();
+                    if (validFields.Contains(field))
+                    {
+                        if (match.Groups[4].Success)
+                        {
+                            var fieldPhrase = match.Groups[4].Value.Trim();
+                            if (!string.IsNullOrEmpty(fieldPhrase))
+                            {
+                                if (!fieldPhrases.ContainsKey(field))
+                                    fieldPhrases[field] = new List<string>();
+                                fieldPhrases[field].Add(fieldPhrase);
+                            }
+                        }
+                        else if (match.Groups[5].Success)
+                        {
+                            var fieldTerm = match.Groups[5].Value.Trim();
+                            if (!string.IsNullOrEmpty(fieldTerm))
+                            {
+                                var sanitized = Regex.Replace(fieldTerm, @"[&|!():\*]", "", RegexOptions.None);
+                                if (!string.IsNullOrEmpty(sanitized))
+                                {
+                                    if (!fieldSearches.ContainsKey(field))
+                                        fieldSearches[field] = new List<string>();
+                                    fieldSearches[field].Add(sanitized);
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (match.Groups[6].Success)
+                {
+                    var word = match.Groups[6].Value.Trim();
+                    if (!string.IsNullOrEmpty(word))
+                    {
+                        var sanitized = Regex.Replace(word, @"[&|!():\*]", "", RegexOptions.None);
+                        if (!string.IsNullOrEmpty(sanitized))
+                            individualWords.Add(sanitized);
+                    }
+                }
+            }
+
+            string tsQuery = null;
+            if (individualWords.Any())
+            {
+                // Use prefix matching (:*) for each term to enable partial word matching
+                // This allows "isenb" to match "isenboeck", "isenböck", etc.
+                // The GIN index supports prefix matching efficiently
+                var escapedTerms = individualWords.Select(t => t.Replace("'", "''") + ":*");
+                tsQuery = string.Join(" & ", escapedTerms);
+            }
+
+            return (tsQuery, phrases, fieldSearches, fieldPhrases);
+        }
+
+        private string GetColumnNameForField(string fieldName)
+        {
+            return fieldName.ToLower() switch
+            {
+                "subject" => "Subject",
+                "body" => "Body",
+                "from" => "From",
+                "to" => "To",
+                _ => null
+            };
+        }
+
+        /// <summary>
+        /// Builds a GIN-indexable tsquery for an exact phrase or single term, using prefix
+        /// matching (:*) and adjacency (<->) between words. Returns null when the input
+        /// contains no usable tokens (only punctuation), in which case the caller should
+        /// fall back to POSITION-only matching.
+        /// Used as a selective pre-filter before the authoritative POSITION substring check,
+        /// so the GIN index narrows the candidate set and the body is not detoasted during
+        /// matching for the common case.
+        /// </summary>
+        private string BuildPhraseTsQuery(string phrase)
+        {
+            if (string.IsNullOrWhiteSpace(phrase))
+                return null;
+
+            var words = phrase.Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            var escapedTerms = new List<string>(words.Length);
+            foreach (var word in words)
+            {
+                var sanitized = Regex.Replace(word, @"[&|!():\*]", "", RegexOptions.None);
+                if (!string.IsNullOrEmpty(sanitized))
+                    escapedTerms.Add(sanitized.Replace("'", "''") + ":*");
+            }
+
+            if (escapedTerms.Count == 0)
+                return null;
+
+            return string.Join(" <-> ", escapedTerms);
+        }
+
+        private (string OrderByClause, string SortColumn, bool IsTimestampSort) GetOrderByClause(string sortBy, string sortOrder)
+        {
+            // sortBy is already canonicalized by SearchEmailsAsync; the switch
+            // below is a defensive whitelist — unknown values never reach SQL.
+            var (columnName, isTimestampSort) = sortBy switch
+            {
+                "Subject" => ("Subject", false),
+                "From" => ("From", false),
+                "To" => ("To", false),
+                "SentDate" => ("SentDate", true),
+                "ReceivedDate" => ("ReceivedDate", true),
+                _ => ("SentDate", true)
+            };
+
+            var direction = sortOrder == "asc" ? "ASC" : "DESC";
+            return ($@"ORDER BY e.""{columnName}"" {direction}", columnName, isTimestampSort);
+        }
+
+        /// <summary>
+        /// Canonicalizes the sortBy parameter. Any unknown/invalid value
+        /// (including null/empty) falls back to "SentDate". This is the
+        /// single source of truth — callers no longer need to pre-validate.
+        /// </summary>
+        private static string CanonicalizeSortBy(string? sortBy) => sortBy?.Trim().ToLowerInvariant() switch
+        {
+            "receiveddate" => "ReceivedDate",
+            "subject" => "Subject",
+            "from" => "From",
+            "to" => "To",
+            _ => "SentDate" // null, "", "sentdate", unknown -> default
+        };
+
+        /// <summary>
+        /// Canonicalizes the sortOrder parameter. Anything other than "asc"
+        /// (case-insensitive) falls back to "desc".
+        /// </summary>
+        private static string CanonicalizeSortOrder(string? sortOrder) =>
+            sortOrder?.Trim().ToLowerInvariant() == "asc" ? "asc" : "desc";
+
+        private List<Npgsql.NpgsqlParameter> CloneParameters(List<Npgsql.NpgsqlParameter> parameters)
+        {
+            var clonedParameters = new List<Npgsql.NpgsqlParameter>();
+            foreach (var param in parameters)
+            {
+                clonedParameters.Add(new Npgsql.NpgsqlParameter(param.ParameterName, param.Value));
+            }
+            return clonedParameters;
+        }
+
+        private async Task<(List<ArchivedEmail> Emails, int TotalCount)> SearchEmailsEFAsync(
+            string searchTerm,
+            DateTime? fromDate,
+            DateTime? toDate,
+            int? accountId,
+            string folderName,
+            bool? isOutgoing,
+            int skip,
+            int take,
+            List<int> allowedAccountIds = null)
+        {
+            var baseQuery = _context.ArchivedEmails.AsNoTracking().AsQueryable();
+
+            if (allowedAccountIds != null)
+            {
+                if (allowedAccountIds.Any())
+                    baseQuery = baseQuery.Where(e => allowedAccountIds.Contains(e.MailAccountId));
+                else
+                    baseQuery = baseQuery.Where(e => false);
+            }
+
+            if (accountId.HasValue)
+            {
+                if (allowedAccountIds != null && !allowedAccountIds.Contains(accountId.Value))
+                    return (new List<ArchivedEmail>(), 0);
+                baseQuery = baseQuery.Where(e => e.MailAccountId == accountId.Value);
+            }
+
+            if (fromDate.HasValue)
+                baseQuery = baseQuery.Where(e => e.SentDate >= fromDate.Value);
+
+            if (toDate.HasValue)
+                baseQuery = baseQuery.Where(e => e.SentDate <= toDate.Value.AddDays(1).AddSeconds(-1));
+
+            if (isOutgoing.HasValue)
+                baseQuery = baseQuery.Where(e => e.IsOutgoing == isOutgoing.Value);
+
+            if (!string.IsNullOrEmpty(folderName))
+            {
+                // selecting a folder also shows the emails of all descendant folders (path-boundary
+                // prefix match). Intermediate folders rendered in the folder tree can hold no emails
+                // themselves; an exact-only match would return an empty result for such parents.
+                var slashPrefix = folderName + "/";
+                var backslashPrefix = folderName + "\\";
+                var dotPrefix = folderName + ".";
+                baseQuery = baseQuery.Where(e => e.FolderName == folderName
+                    || e.FolderName.StartsWith(slashPrefix)
+                    || e.FolderName.StartsWith(backslashPrefix)
+                    || e.FolderName.StartsWith(dotPrefix));
+            }
+
+            IQueryable<ArchivedEmail> searchQuery = baseQuery;
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var (tsQuery, phrases, fieldSearches, fieldPhrases) = ParseSearchTermForTsQuery(searchTerm);
+
+                if (!string.IsNullOrEmpty(tsQuery))
+                {
+                    // Split terms and strip the ':*' suffix (used for prefix matching in PostgreSQL full-text search)
+                    // The fallback ILike search already supports partial matching via %wildcard%
+                    var words = tsQuery.Split('&', StringSplitOptions.RemoveEmptyEntries)
+                                      .Select(w => w.Trim().Replace("''", "'").Replace(":*", ""))
+                                      .ToList();
+
+                    foreach (var word in words)
+                    {
+                        var escapedWord = word.Replace("'", "''");
+                        searchQuery = searchQuery.Where(e =>
+                            EF.Functions.ILike(e.Subject, $"%{escapedWord}%") ||
+                            EF.Functions.ILike(e.From, $"%{escapedWord}%") ||
+                            EF.Functions.ILike(e.To, $"%{escapedWord}%") ||
+                            EF.Functions.ILike(e.Body, $"%{escapedWord}%") ||
+                            EF.Functions.ILike(e.Cc, $"%{escapedWord}%") ||
+                            EF.Functions.ILike(e.Bcc, $"%{escapedWord}%")
+                        );
+                    }
+                }
+
+                foreach (var phrase in phrases)
+                {
+                    searchQuery = searchQuery.Where(e =>
+                        (e.Subject != null && e.Subject.ToLower().Contains(phrase.ToLower())) ||
+                        (e.From != null && e.From.ToLower().Contains(phrase.ToLower())) ||
+                        (e.To != null && e.To.ToLower().Contains(phrase.ToLower())) ||
+                        (e.Body != null && e.Body.ToLower().Contains(phrase.ToLower())) ||
+                        (e.Cc != null && e.Cc.ToLower().Contains(phrase.ToLower())) ||
+                        (e.Bcc != null && e.Bcc.ToLower().Contains(phrase.ToLower()))
+                    );
+                }
+
+                foreach (var fieldSearch in fieldSearches)
+                {
+                    var field = fieldSearch.Key;
+                    var terms = fieldSearch.Value;
+
+                    foreach (var term in terms)
+                    {
+                        var escapedTerm = term.Replace("'", "''");
+                        switch (field.ToLower())
+                        {
+                            case "subject":
+                                searchQuery = searchQuery.Where(e => e.Subject != null && EF.Functions.ILike(e.Subject, $"%{escapedTerm}%"));
+                                break;
+                            case "body":
+                                searchQuery = searchQuery.Where(e => e.Body != null && EF.Functions.ILike(e.Body, $"%{escapedTerm}%"));
+                                break;
+                            case "from":
+                                searchQuery = searchQuery.Where(e => e.From != null && EF.Functions.ILike(e.From, $"%{escapedTerm}%"));
+                                break;
+                            case "to":
+                                searchQuery = searchQuery.Where(e => e.To != null && EF.Functions.ILike(e.To, $"%{escapedTerm}%"));
+                                break;
+                        }
+                    }
+                }
+
+                foreach (var fieldPhrase in fieldPhrases)
+                {
+                    var field = fieldPhrase.Key;
+                    var fieldPhrasesList = fieldPhrase.Value;
+
+                    foreach (var phrase in fieldPhrasesList)
+                    {
+                        switch (field.ToLower())
+                        {
+                            case "subject":
+                                searchQuery = searchQuery.Where(e => e.Subject != null && e.Subject.ToLower().Contains(phrase.ToLower()));
+                                break;
+                            case "body":
+                                searchQuery = searchQuery.Where(e => e.Body != null && e.Body.ToLower().Contains(phrase.ToLower()));
+                                break;
+                            case "from":
+                                searchQuery = searchQuery.Where(e => e.From != null && e.From.ToLower().Contains(phrase.ToLower()));
+                                break;
+                            case "to":
+                                searchQuery = searchQuery.Where(e => e.To != null && e.To.ToLower().Contains(phrase.ToLower()));
+                                break;
+                        }
+                    }
+                }
+            }
+
+            var totalCount = await searchQuery.CountAsync();
+            var emails = await searchQuery
+                .Include(e => e.MailAccount)
+                .OrderByDescending(e => e.SentDate)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+
+            return (emails, totalCount);
+        }
+
+        #endregion
+
+        #region Email Count
+
+        public async Task<int> GetEmailCountByAccountAsync(int accountId)
+        {
+            return await _context.ArchivedEmails.CountAsync(e => e.MailAccountId == accountId);
+        }
+
+        #endregion
+
+        #region Export Methods
+
+        public async Task<byte[]> ExportEmailsAsync(ExportViewModel parameters, List<int> allowedAccountIds = null)
+        {
+            using var ms = new MemoryStream();
+
+            if (parameters.EmailId.HasValue)
+            {
+                var email = await _context.ArchivedEmails
+                    .Include(e => e.MailAccount)
+                    .Include(e => e.Attachments)
+                        .ThenInclude(a => a.AttachmentContent)
+                    .FirstOrDefaultAsync(e => e.Id == parameters.EmailId.Value);
+
+                if (email == null)
+                {
+                    throw new InvalidOperationException($"Email with ID {parameters.EmailId.Value} not found");
+                }
+
+                await ExportSingleEmailAsEml(email, ms);
+            }
+
+            ms.Position = 0;
+            return ms.ToArray();
+        }
+
+        private async Task ExportSingleEmailAsEml(ArchivedEmail email, MemoryStream ms)
+        {
+            var message = new MimeMessage();
+            message.Subject = email.Subject;
+
+            try { message.From.Add(InternetAddress.Parse(email.From)); }
+            catch { message.From.Add(new MailboxAddress("Sender", "sender@example.com")); }
+
+            // Apply stored display name to the From address if available
+            MailContentHelper.ApplyDisplayNames(message.From, email.FromDisplayName);
+
+            foreach (var to in email.To.Split(',', StringSplitOptions.RemoveEmptyEntries))
+            {
+                try { message.To.Add(InternetAddress.Parse(to.Trim())); }
+                catch { continue; }
+            }
+
+            MailContentHelper.ApplyDisplayNames(message.To, email.ToDisplayNames);
+
+            if (!string.IsNullOrEmpty(email.Cc))
+            {
+                foreach (var cc in email.Cc.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    try { message.Cc.Add(InternetAddress.Parse(cc.Trim())); }
+                    catch { continue; }
+                }
+
+                MailContentHelper.ApplyDisplayNames(message.Cc, email.CcDisplayNames);
+            }
+
+            if (!string.IsNullOrEmpty(email.Bcc))
+            {
+                foreach (var bcc in email.Bcc.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                {
+                    try { message.Bcc.Add(InternetAddress.Parse(bcc.Trim())); }
+                    catch { continue; }
+                }
+
+                MailContentHelper.ApplyDisplayNames(message.Bcc, email.BccDisplayNames);
+            }
+
+            // Import raw headers if available (for forensic/compliance purposes)
+            if (!string.IsNullOrEmpty(email.RawHeaders))
+            {
+                try
+                {
+                    // Parse and add raw headers to preserve original headers
+                    using var reader = new StringReader(email.RawHeaders);
+                    string? line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        var colonIndex = line.IndexOf(':');
+                        if (colonIndex > 0)
+                        {
+                            var headerName = line.Substring(0, colonIndex).Trim();
+                            var headerValue = line.Substring(colonIndex + 1).Trim();
+                            
+                            // Skip headers that are already set by MimeMessage properties
+                            // to avoid duplicates
+                            var skipHeaders = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                            {
+                                "Subject", "From", "To", "Cc", "Bcc", "Date", "Message-ID",
+                                "MIME-Version", "Content-Type"
+                            };
+                            
+                            if (!skipHeaders.Contains(headerName))
+                            {
+                                try
+                                {
+                                    message.Headers.Add(headerName, headerValue);
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogDebug("Could not add header {HeaderName}: {Error}", headerName, ex.Message);
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error parsing raw headers for email {EmailId}", email.Id);
+                }
+            }
+
+            // Priority: Original body (with null bytes) > Untruncated body > Regular body
+            // Use OriginalBody if available (contains original content including null bytes)
+            var htmlBodyToExport = email.OriginalBodyHtml != null
+                ? Encoding.UTF8.GetString(email.OriginalBodyHtml)
+                : (!string.IsNullOrEmpty(email.BodyUntruncatedHtml)
+                    ? email.BodyUntruncatedHtml
+                    : email.HtmlBody);
+
+            var textBodyToExport = email.OriginalBodyText != null
+                ? Encoding.UTF8.GetString(email.OriginalBodyText)
+                : (!string.IsNullOrEmpty(email.BodyUntruncatedText)
+                    ? email.BodyUntruncatedText
+                    : email.Body);
+
+            // Build the body so it faithfully reflects the original structure:
+            // - genuine text + html  -> multipart/alternative (text/plain + text/html)
+            // - only html (or text is HTML stored as fallback) -> text/html
+            // - only text -> text/plain
+            var hasHtmlToExport = !string.IsNullOrEmpty(htmlBodyToExport);
+            var hasGenuineTextToExport = !string.IsNullOrEmpty(textBodyToExport)
+                && !MailContentHelper.IsHtmlContent(textBodyToExport, htmlBodyToExport);
+
+            MimeEntity body;
+            if (hasHtmlToExport && hasGenuineTextToExport)
+            {
+                var alternative = new Multipart("alternative");
+                alternative.Add(new TextPart("plain") { Text = textBodyToExport });
+                alternative.Add(new TextPart("html") { Text = htmlBodyToExport });
+                body = alternative;
+            }
+            else if (hasHtmlToExport)
+            {
+                body = new TextPart("html") { Text = htmlBodyToExport };
+            }
+            else
+            {
+                body = new TextPart("plain") { Text = textBodyToExport ?? string.Empty };
+            }
+
+            if (email.Attachments.Any())
+            {
+                var multipart = new Multipart("mixed");
+                var inlineAttachments = email.Attachments.Where(a => !string.IsNullOrEmpty(a.ContentId)).ToList();
+                var regularAttachments = email.Attachments.Where(a => string.IsNullOrEmpty(a.ContentId)).ToList();
+
+                if (inlineAttachments.Any() && !string.IsNullOrEmpty(email.HtmlBody))
+                {
+                    var related = new Multipart("related");
+                    related.Add(body);
+
+                    foreach (var attachment in inlineAttachments)
+                    {
+                        var mimePart = new MimePart(attachment.ContentType)
+                        {
+                            Content = new MimeContent(new MemoryStream(attachment.Content)),
+                            ContentId = attachment.ContentId,
+                            ContentDisposition = new ContentDisposition(ContentDisposition.Inline),
+                            ContentTransferEncoding = ContentEncoding.Base64,
+                            FileName = attachment.FileName
+                        };
+                        related.Add(mimePart);
+                    }
+
+                    multipart.Add(related);
+                }
+                else
+                {
+                    multipart.Add(body);
+                }
+
+                foreach (var attachment in regularAttachments)
+                {
+                    var mimePart = new MimePart(attachment.ContentType)
+                    {
+                        Content = new MimeContent(new MemoryStream(attachment.Content)),
+                        ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                        ContentTransferEncoding = ContentEncoding.Base64,
+                        FileName = attachment.FileName
+                    };
+                    multipart.Add(mimePart);
+                }
+
+                message.Body = multipart;
+            }
+            else
+            {
+                message.Body = body;
+            }
+
+            message.Date = _dateTimeHelper.ToDisplayTimeZoneOffset(email.SentDate);
+            // Apply the stored Message-ID only when it normalizes to a usable value;
+            // MailKit 4.17.0 throws on an empty one (M3).
+            MailContentHelper.ApplyRestorableMessageId(message, email.MessageId);
+
+            await Task.Run(() => message.WriteTo(ms));
+        }
+
+        #endregion
+
+        #region Dashboard Methods
+
+        /// <summary>
+        /// How many accounts the dashboard panel shows. Roughly what fits beside the ten most
+        /// recent emails on a 1080p screen.
+        /// </summary>
+        internal const int DashboardAccountRows = 25;
+
+        /// <summary>
+        /// Picks the accounts the dashboard panel shows and puts the ones whose last run reported
+        /// something at the top, then orders by last sync descending.
+        ///
+        /// Ordering by last sync alone drops exactly the accounts worth looking at. A run that
+        /// failed messages or folders does not advance LastSync, so such an account keeps sinking
+        /// while the healthy ones move up on every cycle, and on an installation with more
+        /// accounts than rows it leaves the panel altogether. Missing folders do not hold the
+        /// timestamp back, so that milder case stayed visible while the worse one did not.
+        ///
+        /// The issue flag comes from the in-process last-run index and not from a column, so the
+        /// order cannot be expressed in SQL. Hence two passes: two columns for every account, the
+        /// decision in memory, and the per-account message count only for the rows that survive
+        /// it. The expensive projection still runs over <see cref="DashboardAccountRows"/> rows,
+        /// which is the point of capping it in the first place.
+        /// </summary>
+        internal static List<AccountStatistics> BuildAccountPanel(
+            IQueryable<MailAccount> accounts,
+            Func<int, bool> lastRunHadIssues)
+        {
+            var candidates = accounts
+                .Select(a => new { a.Id, a.LastSync })
+                .ToList();
+
+            var chosen = candidates
+                .OrderByDescending(a => lastRunHadIssues(a.Id))
+                .ThenByDescending(a => a.LastSync)
+                .Take(DashboardAccountRows)
+                .Select(a => a.Id)
+                .ToList();
+
+            var rows = accounts
+                .Where(a => chosen.Contains(a.Id))
+                .Select(a => new AccountStatistics
+                {
+                    AccountId = a.Id,
+                    AccountName = a.Name,
+                    EmailAddress = a.EmailAddress,
+                    EmailCount = a.ArchivedEmails.Count,
+                    LastSyncTime = a.LastSync,
+                    IsEnabled = a.IsEnabled,
+                    Provider = a.Provider
+                })
+                .ToDictionary(a => a.AccountId);
+
+            // Contains() carries no order, and the order is the whole point here. An account
+            // deleted between the two passes is simply not in the second one.
+            return chosen
+                .Where(rows.ContainsKey)
+                .Select(id => rows[id])
+                .ToList();
+        }
+
+        /// <summary>
+        /// Applies the panel rule of <see cref="BuildAccountPanel"/> to already-built rows. The
+        /// panel is cached for <see cref="DashboardOptions.CacheSeconds"/> but the issue flag is
+        /// read per request, so a cached order can go stale the moment a run finishes or a failure
+        /// is acknowledged. Re-sorting the decorated rows right before they are shown keeps the
+        /// order and the marker on the same data; the rows themselves stay cached, only the
+        /// ordering work repeats.
+        /// </summary>
+        internal static void ApplyPanelOrder(
+            List<AccountStatistics> rows,
+            Func<int, bool> lastRunHadIssues)
+        {
+            if (rows == null || rows.Count < 2)
+                return;
+
+            var ordered = rows
+                .OrderByDescending(a => lastRunHadIssues(a.AccountId))
+                .ThenByDescending(a => a.LastSyncTime)
+                .ToList();
+
+            rows.Clear();
+            rows.AddRange(ordered);
+        }
+
+        /// <param name="lastRunHadIssues">
+        /// Whether an account's last finished run reported anything. Comes from the caller because
+        /// it lives in the sync job service and not in the database. Null orders by last sync
+        /// alone, which is what a caller without that index gets.
+        /// </param>
+        public async Task<DashboardViewModel> GetDashboardStatisticsAsync(
+            Func<int, bool>? lastRunHadIssues = null)
+        {
+            var hasIssues = lastRunHadIssues ?? (_ => false);
+            return await GetOrCreateCachedStatisticsAsync("admin", queryable =>
+                new DashboardViewModel
+                {
+                    TotalEmails = queryable.ArchivedEmails.Count(),
+                    TotalAccounts = queryable.MailAccounts.Count(),
+                    TotalAttachments = queryable.EmailAttachments.Count(),
+                    // The panel sits next to the ten most recent emails and is meant to be read at
+                    // a glance, not to be a second account list: that one is one click away and
+                    // pages. Accounts that never completed a sync sort last by their epoch
+                    // timestamp, which is where they belong when mailboxes are provisioned
+                    // disabled and switched on later.
+                    EmailsPerAccount = BuildAccountPanel(queryable.MailAccounts, hasIssues),
+                    EmailsByMonth = BuildEmailsByMonth(queryable.ArchivedEmails),
+                    TopSenders = queryable.ArchivedEmails
+                        .Where(e => !e.IsOutgoing)
+                        .GroupBy(e => e.From)
+                        .Select(g => new EmailCountByAddress
+                        {
+                            EmailAddress = g.Key,
+                            Count = g.Count()
+                        })
+                        .OrderByDescending(e => e.Count)
+                        .Take(10)
+                        .ToList(),
+                    RecentEmails = queryable.ArchivedEmails
+                        .OrderByDescending(e => e.SentDate)
+                        .Select(e => new RecentEmailDto
+                        {
+                            Id = e.Id,
+                            Subject = e.Subject,
+                            From = e.From,
+                            SentDate = e.SentDate,
+                            IsOutgoing = e.IsOutgoing,
+                            MailAccountName = e.MailAccount.Name
+                        })
+                        .Take(10)
+                        .ToList()
+                });
+        }
+
+        /// <summary>
+        /// Computes or fetches cached dashboard statistics. The factory receives the
+        /// DbContext so it can build queries; values are enumerated synchronously on
+        /// a background thread (EF does not allow parallel async evaluation inside a
+        /// single context). The result is cached for <see cref="DashboardOptions.CacheSeconds"/>.
+        /// Dynamic per-request decorations (storage, sync flags, active jobs) are applied
+        /// by the caller and are NOT cached.
+        /// </summary>
+        internal async Task<DashboardViewModel> GetOrCreateCachedStatisticsAsync(
+            string cacheKeySuffix,
+            Func<MailArchiverDbContext, DashboardViewModel> statisticsFactory)
+        {
+            var cacheSeconds = _dashboardOptions.CacheSeconds;
+            var cacheKey = $"dashboard-stats-{cacheKeySuffix}";
+
+            if (cacheSeconds > 0
+                && _memoryCache.TryGetValue(cacheKey, out DashboardViewModel? cached)
+                && cached != null)
+                return CloneStatistics(cached);
+
+            var model = await Task.Run(() => statisticsFactory(_context));
+
+            try
+            {
+                var totalDatabaseSizeBytes = await GetDatabaseSizeAsync();
+                model.TotalStorageUsed = FormatFileSize(totalDatabaseSizeBytes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting database size: {Message}", ex.Message);
+                model.TotalStorageUsed = string.Empty;
+            }
+
+            if (cacheSeconds > 0)
+                _memoryCache.Set(cacheKey, model, new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(cacheSeconds),
+                    Size = 1
+                });
+
+            return CloneStatistics(model);
+        }
+
+        /// <summary>
+        /// Deep-copies the cacheable statistics so per-request mutations (StorageUsed,
+        /// IsSyncing, IsSyncPending, LastRunHadIssues) never leak into the shared cache entry.
+        /// </summary>
+        private static DashboardViewModel CloneStatistics(DashboardViewModel source)
+        {
+            return new DashboardViewModel
+            {
+                TotalEmails = source.TotalEmails,
+                TotalAccounts = source.TotalAccounts,
+                TotalAttachments = source.TotalAttachments,
+                TotalStorageUsed = source.TotalStorageUsed,
+                EmailsPerAccount = source.EmailsPerAccount
+                    .Select(a => new AccountStatistics
+                    {
+                        AccountId = a.AccountId,
+                        AccountName = a.AccountName,
+                        EmailAddress = a.EmailAddress,
+                        EmailCount = a.EmailCount,
+                        LastSyncTime = a.LastSyncTime,
+                        IsEnabled = a.IsEnabled,
+                        Provider = a.Provider
+                    })
+                    .ToList(),
+                EmailsByMonth = source.EmailsByMonth
+                    .Select(m => new EmailCountByPeriod { Period = m.Period, Count = m.Count })
+                    .ToList(),
+                TopSenders = source.TopSenders
+                    .Select(s => new EmailCountByAddress { EmailAddress = s.EmailAddress, Count = s.Count })
+                    .ToList(),
+                RecentEmails = source.RecentEmails
+                    .Select(e => new RecentEmailDto
+                    {
+                        Id = e.Id,
+                        Subject = e.Subject,
+                        From = e.From,
+                        SentDate = e.SentDate,
+                        IsOutgoing = e.IsOutgoing,
+                        MailAccountName = e.MailAccountName
+                    })
+                    .ToList()
+            };
+        }
+
+        /// <summary>
+        /// Builds the last-12-months histogram with a single grouped query instead of
+        /// twelve sequential COUNT roundtrips. Groups by year/month so it translates
+        /// to both PostgreSQL and the query providers used by tests.
+        /// </summary>
+        internal static List<EmailCountByPeriod> BuildEmailsByMonth(IQueryable<ArchivedEmail> emails)
+        {
+            var now = DateTime.UtcNow;
+            var startDate = now.AddMonths(-11).Date;
+            startDate = new DateTime(startDate.Year, startDate.Month, 1);
+            var nextMonth = startDate.AddMonths(12);
+
+            var counts = emails
+                .Where(e => e.SentDate >= startDate && e.SentDate < nextMonth)
+                .GroupBy(e => new { e.SentDate.Year, e.SentDate.Month })
+                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                .ToDictionary(k => (k.Year, k.Month), k => k.Count);
+
+            var months = new List<EmailCountByPeriod>(12);
+            for (int i = 0; i < 12; i++)
+            {
+                var currentMonth = startDate.AddMonths(i);
+                counts.TryGetValue((currentMonth.Year, currentMonth.Month), out var count);
+                months.Add(new EmailCountByPeriod
+                {
+                    Period = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(currentMonth.Month)} {currentMonth.Year}",
+                    Count = count
+                });
+            }
+            return months;
+        }
+
+        private async Task<long> GetDatabaseSizeAsync()
+        {
+            try
+            {
+                using var connection = new Npgsql.NpgsqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync();
+
+                var sql = "SELECT pg_database_size(current_database())";
+
+                using var command = new Npgsql.NpgsqlCommand(sql, connection);
+                var result = await command.ExecuteScalarAsync();
+
+                return Convert.ToInt64(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting database size: {Message}", ex.Message);
+                return await _context.EmailAttachments.SumAsync(a => (long)a.Size);
+            }
+        }
+
+        private string FormatFileSize(long bytes)
+        {
+            string[] suffixes = { "B", "KB", "MB", "GB", "TB" };
+            int counter = 0;
+            decimal number = bytes;
+            while (Math.Round(number / 1024) >= 1)
+            {
+                number /= 1024;
+                counter++;
+            }
+            return $"{number:n1} {suffixes[counter]}";
+        }
+
+        #endregion
+
+        #region Archiving
+
+        public async Task<bool> ArchiveEmailAsync(MailAccount account, MimeMessage message, bool isOutgoing, string? folderName = null)
+        {
+            // Extract date with fallback handling for malformed Date headers
+            var emailDate = MailContentHelper.ExtractEmailDate(message.Date, message.Headers);
+
+            // Extract raw headers for forensic/compliance purposes
+                var rawHeaders = ExtractRawHeaders(message);
+                
+                // Clean raw headers to remove null bytes (prevent PostgreSQL UTF-8 errors)
+                if (!string.IsNullOrEmpty(rawHeaders))
+                {
+                    rawHeaders = MailContentHelper.CleanText(rawHeaders);
+                }
+
+                // Check if this email is already archived
+            string messageId;
+            string? legacyMessageId = null;
+            string? importedMessageId = null;
+            if (!string.IsNullOrWhiteSpace(message.MessageId))
+            {
+                messageId = message.MessageId!;
+            }
+            else
+            {
+                // No Message-ID header: derive a deterministic fallback ID (same algorithm
+                // across IMAP, import and M365 pipelines). The canonical header block is
+                // included so that distinct deliveries with identical From/To/Subject/Date
+                // (very old mail without Message-ID and Subject headers) do NOT collapse
+                // onto a single key - their Received chains differ per delivery.
+                var fallbackFrom = string.Join(",", message.From.Mailboxes.Select(m => m.Address));
+                var fallbackTo = string.Join(",", message.To.Mailboxes.Select(m => m.Address));
+                messageId = MailContentHelper.GenerateFallbackMessageId(
+                    fallbackFrom, fallbackTo, message.Subject, emailDate.Ticks,
+                    MailContentHelper.BuildCanonicalHeaders(message.Headers));
+
+                // Fallback key used before the deterministic generator existed. Still
+                // matched below so rows archived under it are recognized (and healed).
+                legacyMessageId = $"{message.From}-{message.To}-{message.Subject}-{emailDate.Ticks}";
+
+                // Fallback key used by the EML/MBOX import pipeline (hash without canonical
+                // headers, Date header only). Matched below so imported rows are recognized
+                // (and healed) instead of creating duplicates on sync.
+                importedMessageId = MailContentHelper.GenerateFallbackMessageId(
+                    fallbackFrom, fallbackTo, message.Subject, message.Date.Ticks);
+
+                _logger.LogWarning("Email without Message-ID header: using generated fallback ID {MessageId}. " +
+                    "From: '{From}', To: '{To}', Date: {Date}, Folder: {FolderName}, Account: {AccountName}",
+                    messageId, fallbackFrom, fallbackTo, emailDate, folderName ?? string.Empty, account.Name);
+            }
+
+            var existingEmail = await _context.ArchivedEmails
+                .FirstOrDefaultAsync(e => e.MailAccountId == account.Id &&
+                    (e.MessageId == messageId ||
+                     (legacyMessageId != null && e.MessageId == legacyMessageId) ||
+                     (importedMessageId != null && e.MessageId == importedMessageId)));
+
+            if (existingEmail != null)
+            {
+                var hasChanges = false;
+
+                // Self-heal rows archived under a fallback key (legacy or import format) -
+                // but never touch compliance-locked rows: the DB trigger
+                // (prevent_locked_email_changes) forbids any change there besides
+                // IsLocked/FolderName.
+                if (existingEmail.MessageId != messageId && !existingEmail.IsLocked)
+                {
+                    _logger.LogInformation("Migrating fallback Message-ID '{LegacyMessageId}' to '{MessageId}' for existing email: {Subject}",
+                        existingEmail.MessageId, messageId, existingEmail.Subject);
+                    existingEmail.MessageId = messageId;
+                    hasChanges = true;
+                }
+
+                // E-Mail existiert bereits, prüfen ob der Ordner geändert wurde
+                var cleanFolderName = MailContentHelper.CleanText(folderName ?? string.Empty);
+                if (existingEmail.FolderName != cleanFolderName)
+                {
+                    // Ordner hat sich geändert, aktualisieren
+                    var oldFolder = existingEmail.FolderName;
+                    existingEmail.FolderName = cleanFolderName;
+                    hasChanges = true;
+                    _logger.LogInformation("Updated folder for existing email: {Subject} from '{OldFolder}' to '{NewFolder}'",
+                        existingEmail.Subject, oldFolder, cleanFolderName);
+                }
+
+                if (hasChanges)
+                {
+                    await _context.SaveChangesAsync();
+                }
+
+                _logger.LogDebug("Skipping already archived email: MessageId={MessageId}, Folder={FolderName}, Account={AccountName}",
+                    messageId, cleanFolderName, account.Name);
+                return false; // E-Mail existiert bereits
+            }
+
+            try
+            {
+                // Convert timestamp to configured display timezone
+                var convertedSentDate = _dateTimeHelper.ConvertToDisplayTimeZone(emailDate);
+                var subject = MailContentHelper.CleanText(message.Subject ?? "(No Subject)");
+                // Extract email address from From field
+                var fromAddress = message.From?.FirstOrDefault() as MailboxAddress;
+                var from = MailContentHelper.CleanText(fromAddress?.Address ?? string.Empty);
+                // Extract email addresses from To field
+                var toAddresses = message.To?.Select(m => m as MailboxAddress).Where(m => m != null).Select(m => m.Address) ?? new List<string>();
+                var to = MailContentHelper.CleanText(string.Join(", ", toAddresses));
+                // Extract email addresses from Cc field
+                var ccAddresses = message.Cc?.Select(m => m as MailboxAddress).Where(m => m != null).Select(m => m.Address) ?? new List<string>();
+                var cc = MailContentHelper.CleanText(string.Join(", ", ccAddresses));
+                // Extract email addresses from Bcc field
+                var bccAddresses = message.Bcc?.Select(m => m as MailboxAddress).Where(m => m != null).Select(m => m.Address) ?? new List<string>();
+                var bcc = MailContentHelper.CleanText(string.Join(", ", bccAddresses));
+
+                // Extract display names (MailboxAddress.Name) for faithful restore/export
+                var fromDisplayName = MailContentHelper.CleanText(fromAddress?.Name);
+                var toDisplayNames = MailContentHelper.CleanText(string.Join(", ",
+                    message.To?.Select(m => (m as MailboxAddress)?.Name)
+                            .Where(n => !string.IsNullOrEmpty(n)) ?? Enumerable.Empty<string>()));
+                var ccDisplayNames = MailContentHelper.CleanText(string.Join(", ",
+                    message.Cc?.Select(m => (m as MailboxAddress)?.Name)
+                            .Where(n => !string.IsNullOrEmpty(n)) ?? Enumerable.Empty<string>()));
+                var bccDisplayNames = MailContentHelper.CleanText(string.Join(", ",
+                    message.Bcc?.Select(m => (m as MailboxAddress)?.Name)
+                            .Where(n => !string.IsNullOrEmpty(n)) ?? Enumerable.Empty<string>()));
+
+                // Extract text and HTML body preserving original encoding
+                var body = string.Empty;
+                var htmlBody = string.Empty;
+
+                // Store raw body content BEFORE cleaning to detect null bytes
+                // This preserves the original content including any null bytes for faithful export
+                var rawTextBody = message.TextBody;
+                var rawHtmlBody = message.HtmlBody;
+                
+                // Check if original bodies contain null bytes - if so, store them as byte arrays
+                var hasNullBytesInText = !string.IsNullOrEmpty(rawTextBody) && rawTextBody.Contains('\0');
+                var hasNullBytesInHtml = !string.IsNullOrEmpty(rawHtmlBody) && rawHtmlBody.Contains('\0');
+                
+                // Keep references to the original unmodified body content
+                // These will be stored in OriginalBodyText/Html (as byte[]) if they differ from the stored version
+                // IMPORTANT: Clean the original bodies to remove null bytes for the cleaned version
+                var originalTextBody = !string.IsNullOrEmpty(rawTextBody) ? MailContentHelper.CleanText(rawTextBody) : null;
+                var originalHtmlBody = !string.IsNullOrEmpty(rawHtmlBody) ? MailContentHelper.CleanText(rawHtmlBody) : null;
+
+                // Handle text body - use original content directly to preserve encoding
+                if (!string.IsNullOrEmpty(message.TextBody))
+                {
+                    var cleanedTextBody = MailContentHelper.CleanText(message.TextBody);
+                    // Check if text body needs truncation for tsvector compatibility
+                    // Set to 500KB to ensure total of all fields stays under 1MB tsvector limit
+                    if (Encoding.UTF8.GetByteCount(cleanedTextBody) > 500_000)
+                    {
+                        body = MailContentHelper.TruncateTextForStorage(cleanedTextBody, 500_000);
+                    }
+                    else
+                    {
+                        body = cleanedTextBody;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(message.HtmlBody))
+                {
+                    // If no TextBody, try to extract text from HTML body
+                    // For BodyUntruncatedText, the original source is HtmlBody in this case
+                    originalTextBody = message.HtmlBody;
+                    var cleanedHtmlAsText = MailContentHelper.CleanText(message.HtmlBody);
+                    // Check if HTML-as-text body needs truncation for tsvector compatibility
+                    // Set to 500KB to ensure total of all fields stays under 1MB tsvector limit
+                    if (Encoding.UTF8.GetByteCount(cleanedHtmlAsText) > 500_000)
+                    {
+                        body = MailContentHelper.TruncateTextForStorage(cleanedHtmlAsText, 500_000);
+                    }
+                    else
+                    {
+                        body = cleanedHtmlAsText;
+                    }
+                }
+
+                // Handle HTML body - preserve original encoding (keep cid: references for inline images)
+                if (!string.IsNullOrEmpty(message.HtmlBody))
+                {
+                    // Keep the original HTML body with cid: references
+                    htmlBody = MailContentHelper.CleanText(message.HtmlBody);
+
+                    // Check if HTML body will be truncated
+                    if (htmlBody.Length > 1_000_000)
+                    {
+                        htmlBody = MailContentHelper.CleanHtmlForStorage(htmlBody);
+                    }
+                }
+
+                var cleanMessageId = MailContentHelper.CleanText(messageId);
+                var cleanFolderName = MailContentHelper.CleanText(folderName ?? string.Empty);
+
+                // Ensure individual fields don't exceed reasonable limits for tsvector
+                // This prevents tsvector size errors when all fields are concatenated
+                subject = MailContentHelper.TruncateFieldForTsvector(subject, 50_000); // ~50KB for subject
+                from = MailContentHelper.TruncateFieldForTsvector(from, 10_000); // ~10KB for from
+                to = MailContentHelper.TruncateFieldForTsvector(to, 50_000); // ~50KB for to (can be many recipients)
+                cc = MailContentHelper.TruncateFieldForTsvector(cc, 50_000); // ~50KB for cc
+                bcc = MailContentHelper.TruncateFieldForTsvector(bcc, 50_000); // ~50KB for bcc
+                                                             // Body already truncated above
+
+                fromDisplayName = MailContentHelper.TruncateFieldForTsvector(fromDisplayName, 50_000);
+                toDisplayNames = MailContentHelper.TruncateFieldForTsvector(toDisplayNames, 50_000);
+                ccDisplayNames = MailContentHelper.TruncateFieldForTsvector(ccDisplayNames, 50_000);
+                bccDisplayNames = MailContentHelper.TruncateFieldForTsvector(bccDisplayNames, 50_000);
+
+                // Final safety check: ensure total size for tsvector doesn't exceed limit
+                var totalTsvectorSize = Encoding.UTF8.GetByteCount(subject) +
+                                       Encoding.UTF8.GetByteCount(body) +
+                                       Encoding.UTF8.GetByteCount(from) +
+                                       Encoding.UTF8.GetByteCount(to) +
+                                       Encoding.UTF8.GetByteCount(cc) +
+                                       Encoding.UTF8.GetByteCount(bcc);
+
+                // PostgreSQL tsvector max is ~1MB (1048575 bytes), use 900KB as safe limit
+                const int maxTsvectorSize = 900_000;
+                if (totalTsvectorSize > maxTsvectorSize)
+                {
+                    _logger.LogWarning("Email fields exceed tsvector limit ({TotalSize} > {MaxSize}), truncating body further",
+                        totalTsvectorSize, maxTsvectorSize);
+
+                    // Calculate how much we need to reduce the body
+                    var otherFieldsSize = totalTsvectorSize - Encoding.UTF8.GetByteCount(body);
+                    var maxBodySize = maxTsvectorSize - otherFieldsSize - 10_000; // 10KB safety buffer
+
+                    if (maxBodySize > 0 && Encoding.UTF8.GetByteCount(body) > maxBodySize)
+                    {
+                        body = MailContentHelper.TruncateTextForStorage(body, maxBodySize);
+                    }
+                    else if (maxBodySize <= 0)
+                    {
+                        // Other fields alone exceed limit, truncate body completely
+                        _logger.LogError("Other email fields alone exceed tsvector limit, body will be saved as attachment only");
+                        body = "[Body too large - saved as attachment]";
+                    }
+                }
+
+                body = MailContentHelper.SanitizeLongTokens(body);
+
+                // Sammle ALLE Anhänge einschließlich inline Images
+                var allAttachments = new List<MimePart>();
+                CollectAllAttachments(message.Body, allAttachments);
+
+                // Determine if the email is outgoing by comparing the From address with the account's email address
+                bool isOutgoingEmail = !string.IsNullOrEmpty(from) &&
+                                      !string.IsNullOrEmpty(account.EmailAddress) &&
+                                      from.Equals(account.EmailAddress, StringComparison.OrdinalIgnoreCase);
+
+                // Additionally check if the folder indicates outgoing mail
+                bool isOutgoingFolder = IsOutgoingFolderByName(folderName);
+
+                // Additionally check if the folder is a drafts folder to exclude it from outgoing emails
+                bool isDraftsFolder = IsDraftsFolder(folderName);
+
+                var archivedEmail = new ArchivedEmail
+                {
+                    MailAccountId = account.Id,
+                    MessageId = cleanMessageId,
+                    Subject = subject,
+                    From = from,
+                    To = to,
+                    Cc = cc,
+                    Bcc = bcc,
+                    FromDisplayName = string.IsNullOrEmpty(fromDisplayName) ? null : fromDisplayName,
+                    ToDisplayNames = string.IsNullOrEmpty(toDisplayNames) ? null : toDisplayNames,
+                    CcDisplayNames = string.IsNullOrEmpty(ccDisplayNames) ? null : ccDisplayNames,
+                    BccDisplayNames = string.IsNullOrEmpty(bccDisplayNames) ? null : bccDisplayNames,
+                    SentDate = convertedSentDate,
+                    ReceivedDate = DateTime.UtcNow,
+                    IsOutgoing = (isOutgoingEmail || isOutgoingFolder) && !isDraftsFolder,
+                    HasAttachments = allAttachments.Any(),
+                    Body = body,
+                    HtmlBody = htmlBody,
+                    // LEGACY: BodyUntruncated fields are no longer populated for new emails (kept for backward compatibility)
+                    // Original body content is now stored in OriginalBody* fields (as byte[]) for both truncation AND null-byte cases
+                    BodyUntruncatedText = null,  // Not populated for new emails - use OriginalBodyText instead
+                    BodyUntruncatedHtml = null,  // Not populated for new emails - use OriginalBodyHtml instead
+                    // Store original body as byte array for faithful export/restore
+                    // Populated when: (1) original contained null bytes, OR (2) original was truncated
+                    OriginalBodyText = (hasNullBytesInText || (!string.IsNullOrEmpty(originalTextBody) && originalTextBody != body)) 
+                        ? Encoding.UTF8.GetBytes(hasNullBytesInText ? rawTextBody! : originalTextBody!) : null,
+                    OriginalBodyHtml = (hasNullBytesInHtml || (!string.IsNullOrEmpty(originalHtmlBody) && originalHtmlBody != htmlBody)) 
+                        ? Encoding.UTF8.GetBytes(hasNullBytesInHtml ? rawHtmlBody! : originalHtmlBody!) : null,
+                    FolderName = cleanFolderName,
+                    RawHeaders = rawHeaders, // Store raw headers for forensic/compliance purposes
+                    Attachments = new List<EmailAttachment>() // Initialize collection for hash calculation
+                };
+
+                // CRITICAL: Prepare attachments BEFORE calculating hash
+                // This ensures the hash includes the attachment content
+                var emailAttachments = new List<EmailAttachment>();
+                if (allAttachments.Any())
+                {
+                    foreach (var attachment in allAttachments)
+                    {
+                        try
+                        {
+                            using var ms = new MemoryStream();
+                            await attachment.Content.DecodeToAsync(ms);
+
+                            var fileName = attachment.FileName;
+                            if (string.IsNullOrEmpty(fileName))
+                            {
+                                if (!string.IsNullOrEmpty(attachment.ContentId))
+                                {
+                                    var extension = GetFileExtensionFromContentType(attachment.ContentType?.MimeType);
+                                    var cleanContentId = attachment.ContentId.Trim('<', '>');
+                                    fileName = $"inline_{cleanContentId}{extension}";
+                                }
+                                else if (attachment.ContentType?.MediaType?.StartsWith("image/") == true)
+                                {
+                                    var extension = GetFileExtensionFromContentType(attachment.ContentType.MimeType);
+                                    fileName = $"inline_image_{Guid.NewGuid().ToString("N")[..8]}{extension}";
+                                }
+                                else
+                                {
+                                    var extension = GetFileExtensionFromContentType(attachment.ContentType?.MimeType);
+                                    fileName = $"attachment_{Guid.NewGuid().ToString("N")[..8]}{extension}";
+                                }
+                            }
+
+                            var cleanFileName = MailContentHelper.CleanText(fileName);
+                            var contentType = MailContentHelper.CleanText(attachment.ContentType?.MimeType ?? "application/octet-stream");
+                            var contentId = !string.IsNullOrEmpty(attachment.ContentId) ? attachment.ContentId.Trim() : null;
+
+                            var emailAttachment = new EmailAttachment
+                            {
+                                FileName = cleanFileName,
+                                ContentType = contentType,
+                                ContentId = contentId,
+                                Content = ms.ToArray(),
+                                Size = ms.Length
+                            };
+
+                            emailAttachments.Add(emailAttachment);
+                            archivedEmail.Attachments.Add(emailAttachment); // Add to collection for hash calculation
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to process attachment: FileName={FileName}, ContentType={ContentType}",
+                                attachment.FileName, attachment.ContentType?.MimeType);
+                        }
+                    }
+                }
+
+                // Rescue floating text/calendar parts (Outlook/M365 meeting invitations).
+                // These parts are neither regular attachments nor inline content and would
+                // otherwise be silently dropped, leaving the archived email body empty.
+                var calendarExtraction = CalendarContentHelper.TryExtractCalendar(message);
+                if (calendarExtraction != null)
+                {
+                    if (string.IsNullOrEmpty(body))
+                    {
+                        body = CalendarContentHelper.ParseICalSummary(calendarExtraction.Content);
+                        originalTextBody = body;
+                        archivedEmail.Body = body;
+                        archivedEmail.OriginalBodyText = Encoding.UTF8.GetBytes(body);
+                    }
+
+                    var icsBytes = Encoding.UTF8.GetBytes(calendarExtraction.Content);
+                    var icsAttachment = new EmailAttachment
+                    {
+                        FileName = MailContentHelper.CleanText(calendarExtraction.FileName),
+                        ContentType = MailContentHelper.CleanText(calendarExtraction.MimeType),
+                        ContentId = null,
+                        Content = icsBytes,
+                        Size = icsBytes.Length
+                    };
+                    emailAttachments.Add(icsAttachment);
+                    archivedEmail.Attachments.Add(icsAttachment);
+                    archivedEmail.HasAttachments = true;
+                }
+
+                try
+                {
+                    _context.ArchivedEmails.Add(archivedEmail);
+                    await _context.SaveChangesAsync();
+
+                    // Attachments are already saved via EF relationship (cascade)
+                    _logger.LogInformation("Successfully saved email with {Count} attachments", emailAttachments.Count);
+
+                    _logger.LogInformation(
+                        "Archived email: {Subject}, From: {From}, To: {To}, Account: {AccountName}, Attachments: {AttachmentCount}",
+                        archivedEmail.Subject, archivedEmail.From, archivedEmail.To, account.Name, allAttachments.Count);
+
+                    return true; // Neue E-Mail erfolgreich archiviert
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error saving archived email to database: {Subject}, {Message}", subject, ex.Message);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error archiving email: Subject={Subject}, From={From}, Error={Message}",
+                    message.Subject, message.From, ex.Message);
+                return false;
+            }
+        }
+
+        private void CollectAllAttachments(MimeEntity entity, List<MimePart> attachments)
+        {
+            if (entity is MimePart mimePart)
+            {
+                // Sammle normale Attachments
+                if (mimePart.IsAttachment)
+                {
+                    attachments.Add(mimePart);
+                    _logger.LogDebug("Found attachment: FileName={FileName}, ContentType={ContentType}",
+                        mimePart.FileName, mimePart.ContentType?.MimeType);
+                }
+                // Sammle inline Images und andere inline Content
+                else if (IsInlineContent(mimePart))
+                {
+                    attachments.Add(mimePart);
+                    _logger.LogDebug("Found inline content: ContentId={ContentId}, ContentType={ContentType}, FileName={FileName}",
+                        mimePart.ContentId, mimePart.ContentType?.MimeType, mimePart.FileName);
+                }
+            }
+            else if (entity is Multipart multipart)
+            {
+                // Rekursiv durch alle Teile einer Multipart-Nachricht gehen
+                foreach (var child in multipart)
+                {
+                    CollectAllAttachments(child, attachments);
+                }
+            }
+            else if (entity is MessagePart messagePart)
+            {
+                // Auch in eingebetteten Nachrichten suchen
+                CollectAllAttachments(messagePart.Message.Body, attachments);
+            }
+        }
+
+        // Hilfsmethode um inline Content zu identifizieren
+        private bool IsInlineContent(MimePart mimePart)
+        {
+            // Prüfe Content-Disposition auf "inline"
+            if (mimePart.ContentDisposition?.Disposition?.Equals("inline", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                _logger.LogDebug("Found inline content via Content-Disposition: inline - {ContentType}, ContentId: {ContentId}",
+                    mimePart.ContentType?.MimeType, mimePart.ContentId);
+                return true;
+            }
+
+            // Prüfe auf Content-ID (das wichtigste Kriterium für inline Images)
+            // Content-ID ist der Standard-Indikator für inline Content, der in HTML via cid: referenziert wird
+            if (!string.IsNullOrEmpty(mimePart.ContentId))
+            {
+                _logger.LogDebug("Found inline content via Content-ID: {ContentId}, ContentType: {ContentType}, FileName: {FileName}",
+                    mimePart.ContentId, mimePart.ContentType?.MimeType, mimePart.FileName);
+                return true;
+            }
+
+            // Fallback: Images ohne Content-ID aber mit inline disposition (falls Content-ID fehlt)
+            if (mimePart.ContentType?.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true &&
+                mimePart.ContentDisposition?.Disposition?.Equals("attachment", StringComparison.OrdinalIgnoreCase) != true)
+            {
+                // Nur wenn es nicht explizit als attachment markiert ist
+                _logger.LogDebug("Found potential inline image without Content-ID: {ContentType}, FileName: {FileName}",
+                    mimePart.ContentType?.MimeType, mimePart.FileName);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Resolves inline images in HTML by converting cid: references to data URLs
+        /// </summary>
+        private string ResolveInlineImagesInHtml(string htmlBody, List<EmailAttachment> attachments)
+        {
+            if (string.IsNullOrEmpty(htmlBody) || attachments == null || !attachments.Any())
+                return htmlBody;
+
+            var resultHtml = htmlBody;
+
+            // Find all cid: references in the HTML
+            var cidMatches = Regex.Matches(htmlBody, @"src\s*=\s*[""']cid:([^""']+)[""']", RegexOptions.IgnoreCase);
+
+            foreach (Match match in cidMatches)
+            {
+                var cid = match.Groups[1].Value;
+
+                // Find the corresponding attachment
+                var attachment = attachments.FirstOrDefault(a =>
+                    !string.IsNullOrEmpty(a.ContentId) &&
+                    (a.ContentId.Equals($"<{cid}>", StringComparison.OrdinalIgnoreCase) ||
+                     a.ContentId.Equals(cid, StringComparison.OrdinalIgnoreCase)));
+
+                // If no attachment with ContentId found, try matching by filename
+                if (attachment == null)
+                {
+                    attachment = attachments.FirstOrDefault(a =>
+                        !string.IsNullOrEmpty(a.FileName) &&
+                        (a.FileName.Equals($"inline_{cid}", StringComparison.OrdinalIgnoreCase) ||
+                         a.FileName.StartsWith($"inline_{cid}.", StringComparison.OrdinalIgnoreCase) ||
+                         a.FileName.Contains($"_{cid}")));
+                }
+
+                if (attachment != null && attachment.Content != null && attachment.Content.Length > 0)
+                {
+                    try
+                    {
+                        // Create a data URL for the inline image
+                        var base64Content = Convert.ToBase64String(attachment.Content);
+                        var dataUrl = $"data:{attachment.ContentType ?? "image/png"};base64,{base64Content}";
+
+                        // Replace the cid: reference with the data URL
+                        resultHtml = resultHtml.Replace(match.Groups[0].Value, $"src=\"{dataUrl}\"");
+
+                        _logger.LogDebug("Resolved inline image with CID: {Cid} to data URL", cid);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to resolve inline image with CID: {Cid}", cid);
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning("Could not find attachment for CID: {Cid}", cid);
+                }
+            }
+
+            return resultHtml;
+        }
+
+        // Hilfsmethode für Dateierweiterungen
+        private string GetFileExtensionFromContentType(string? contentType)
+        {
+            return contentType?.ToLowerInvariant() switch
+            {
+                "image/jpeg" or "image/jpg" => ".jpg",
+                "image/png" => ".png",
+                "image/gif" => ".gif",
+                "image/bmp" => ".bmp",
+                "image/webp" => ".webp",
+                "image/svg+xml" => ".svg",
+                "image/tiff" => ".tiff",
+                "image/ico" or "image/x-icon" => ".ico",
+                "text/html" => ".html",
+                "text/plain" => ".txt",
+                "text/css" => ".css",
+                "application/pdf" => ".pdf",
+                "application/zip" => ".zip",
+                "application/json" => ".json",
+                "application/xml" => ".xml",
+                _ => ".dat"
+            };
+        }
+
+        #endregion
+
+        #region Raw Headers Extraction
+
+        /// <summary>
+        /// Extracts all raw headers from a MimeMessage as a string.
+        /// This includes all headers like Received, Return-Path, X-Headers, etc.
+        /// Useful for forensic and compliance purposes.
+        /// </summary>
+        /// <param name="message">The MimeMessage to extract headers from</param>
+        /// <returns>A string containing all raw headers, or null if extraction fails</returns>
+        private string? ExtractRawHeaders(MimeMessage message)
+        {
+            try
+            {
+                if (message.Headers == null || !message.Headers.Any())
+                {
+                    return null;
+                }
+
+                var headersBuilder = new StringBuilder();
+
+                // Iterate through all headers in their original order
+                foreach (var header in message.Headers)
+                {
+                    // Format: "Header-Name: Header-Value\r\n"
+                    headersBuilder.AppendLine($"{header.Field}: {header.Value}");
+                }
+
+                var rawHeaders = headersBuilder.ToString();
+
+                // Limit size to prevent excessive storage (max ~100KB for headers)
+                const int maxHeaderSize = 100_000;
+                if (rawHeaders.Length > maxHeaderSize)
+                {
+                    _logger.LogWarning("Raw headers exceed {MaxSize} bytes, truncating", maxHeaderSize);
+                    rawHeaders = rawHeaders.Substring(0, maxHeaderSize) + "\r\n[... Headers truncated due to size ...]";
+                }
+
+                _logger.LogDebug("Extracted {Count} raw headers ({Size} bytes) from email", 
+                    message.Headers.Count, rawHeaders.Length);
+
+                return rawHeaders;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to extract raw headers from email: {Message}", ex.Message);
+                return null;
+            }
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Checks if a folder name indicates outgoing mail based on its name in multiple languages
+        /// </summary>
+        /// <param name="folderName">The folder name to check</param>
+        /// <returns>True if the folder name indicates outgoing mail, false otherwise</returns>
+        public bool IsOutgoingFolderByName(string folderName)
+        {
+            var outgoingFolderNames = new[]
+            {
+                // Arabic
+                "المرسلة", "البريد المرسل",
+
+                // Bulgarian
+                "изпратени", "изпратена поща",
+
+                // Chinese (Simplified)
+                "已发送", "已传送",
+
+                // Croatian
+                "poslano", "poslana pošta",
+
+                // Czech
+                "odeslané", "odeslaná pošta",
+
+                // Danish
+                "sendt", "sendte elementer",
+
+                // Dutch
+                "verzonden", "verzonden items", "verzonden e-mail",
+
+                // English
+                "sent", "sent items", "sent mail",
+
+                // Estonian
+                "saadetud", "saadetud kirjad",
+
+                // Finnish
+                "lähetetyt", "lähetetyt kohteet",
+
+                // French
+                "envoyé", "éléments envoyés", "mail envoyé",
+
+                // German
+                "gesendet", "gesendete objekte", "gesendete",
+
+                // Greek
+                "απεσταλμένα", "σταλμένα", "σταλμένα μηνύματα",
+
+                // Hebrew
+                "נשלחו", "דואר יוצא",
+
+                // Hungarian
+                "elküldött", "elküldött elemek",
+
+                // Irish
+                "seolta", "r-phost seolta",
+
+                // Italian
+                "inviato", "posta inviata", "elementi inviati",
+
+                // Japanese
+                "送信済み", "送信済メール", "送信メール",
+
+                // Korean
+                "보낸편지함", "발신함", "보낸메일",
+
+                // Latvian
+                "nosūtītie", "nosūtītās vēstules",
+
+                // Lithuanian
+                "išsiųsta", "išsiųsti laiškai",
+
+                // Maltese
+                "mibgħuta", "posta mibgħuta",
+
+                // Norwegian
+                "sendt", "sendte elementer",
+
+                // Polish
+                "wysłane", "elementy wysłane",
+
+                // Portuguese
+                "enviados", "itens enviados", "mensagens enviadas",
+
+                // Romanian
+                "trimise", "elemente trimise", "mail trimis",
+
+                // Russian
+                "отправленные", "исходящие", "отправлено",
+
+                // Slovak
+                "odoslané", "odoslaná pošta",
+
+                // Slovenian
+                "poslano", "poslana pošta",
+
+                // Spanish
+                "enviado", "elementos enviados", "correo enviado",
+
+                // Swedish
+                "skickat", "skickade objekt",
+
+                // Turkish
+                "gönderilen", "gönderilmiş öğeler"
+            };
+
+            string folderNameLower = folderName?.ToLowerInvariant() ?? "";
+            return outgoingFolderNames.Any(name => folderNameLower.Contains(name));
+        }
+
+        private bool IsDraftsFolder(string folderName)
+        {
+            var draftsFolderNames = new[]
+            {
+                "drafts", "entwürfe", "brouillons", "bozze"
+            };
+
+            string folderNameLower = folderName?.ToLowerInvariant() ?? "";
+            return draftsFolderNames.Any(name => folderNameLower.Contains(name));
+        }
+
+        #region Local Retention
+
+        /// <summary>
+        /// Deletes old emails from the local archive based on LocalRetentionDays setting
+        /// </summary>
+        public async Task<int> DeleteOldLocalEmailsAsync(MailAccount account, string? jobId = null)
+        {
+            if (!account.LocalRetentionDays.HasValue || account.LocalRetentionDays.Value <= 0)
+            {
+                return 0;
+            }
+
+            var cutoffDate = DateTime.UtcNow.AddDays(-account.LocalRetentionDays.Value);
+
+            _logger.LogInformation("Starting deletion of local archived emails older than {Days} days (before {CutoffDate}) for account {AccountName}",
+                account.LocalRetentionDays.Value, cutoffDate, account.Name);
+
+            try
+            {
+                // Find all emails older than the cutoff date for this account
+                var emailsToDelete = await _context.ArchivedEmails
+                    .Where(e => e.MailAccountId == account.Id && e.SentDate < cutoffDate)
+                    .Select(e => new { e.Id, e.Subject, e.From, e.SentDate })
+                    .ToListAsync();
+
+                if (emailsToDelete.Count == 0)
+                {
+                    _logger.LogInformation("No emails found to delete from local archive for account {AccountName}", account.Name);
+                    return 0;
+                }
+
+                _logger.LogInformation("Found {Count} emails to delete from local archive for account {AccountName}",
+                    emailsToDelete.Count, account.Name);
+
+                // Unlock emails that fall under the retention policy so the database
+                // compliance trigger (prevent_locked_email_deletion) allows the deletion.
+                // Retention is exempt from the global DeletionPolicy lock.
+                try
+                {
+                    await _context.Database.ExecuteSqlInterpolatedAsync(
+                        $"UPDATE mail_archiver.\"ArchivedEmails\" SET \"IsLocked\" = false WHERE \"MailAccountId\" = {account.Id} AND \"SentDate\" < {cutoffDate}");
+                    _logger.LogDebug("Unlocked {Count} retention-expired emails for account {AccountName} prior to deletion",
+                        emailsToDelete.Count, account.Name);
+                }
+                catch (Exception unlockEx)
+                {
+                    _logger.LogError(unlockEx, "Failed to unlock retention-expired emails for account {AccountName}", account.Name);
+                }
+
+                // Delete in batches to avoid memory issues
+                var batchSize = _batchOptions.BatchSize;
+                var deletedCount = 0;
+
+                for (int i = 0; i < emailsToDelete.Count; i += batchSize)
+                {
+                    var batch = emailsToDelete.Skip(i).Take(batchSize).ToList();
+                    var batchIds = batch.Select(e => e.Id).ToList();
+
+                    try
+                    {
+                        // Delete attachments first (cascade delete should handle this, but being explicit)
+                        var attachmentsDeleted = await _context.EmailAttachments
+                            .Where(a => batchIds.Contains(a.ArchivedEmailId))
+                            .ExecuteDeleteAsync();
+
+                        // Delete emails
+                        var emailsDeleted = await _context.ArchivedEmails
+                            .Where(e => batchIds.Contains(e.Id))
+                            .ExecuteDeleteAsync();
+
+                        deletedCount += emailsDeleted;
+
+                        _logger.LogDebug("Deleted batch of {Count} emails ({Attachments} attachments) from local archive",
+                            emailsDeleted, attachmentsDeleted);
+
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error deleting batch from local archive for account {AccountName}: {Message}",
+                            account.Name, ex.Message);
+                    }
+
+                    // Add a small delay between batches
+                    if (i + batchSize < emailsToDelete.Count && _batchOptions.PauseBetweenBatchesMs > 0)
+                    {
+                        await Task.Delay(_batchOptions.PauseBetweenBatchesMs);
+                    }
+                }
+
+                _logger.LogInformation("Completed local archive deletion for account {AccountName}. Deleted {Count} emails",
+                    account.Name, deletedCount);
+
+                // Log the deletion summary to AccessLogs
+                if (deletedCount > 0)
+                {
+                    try
+                    {
+                        var accessLog = new AccessLog
+                        {
+                            Username = "System",
+                            Type = AccessLogType.Retention,
+                            Timestamp = DateTime.UtcNow,
+                            SearchParameters = $"Retention (Local): Deleted {deletedCount} emails older than {account.LocalRetentionDays} days from local archive",
+                            MailAccountId = account.Id
+                        };
+
+                        _context.AccessLogs.Add(accessLog);
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (Exception logEx)
+                    {
+                        _logger.LogWarning(logEx, "Failed to log local retention deletion summary to AccessLogs");
+                    }
+                }
+
+                return deletedCount;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during local archive deletion for account {AccountName}: {Message}",
+                    account.Name, ex.Message);
+                return 0;
+            }
+        }
+
+        #endregion
+
+        #region Folder Tree
+
+        /// <summary>
+        /// Gets the folder tree hierarchy with email counts for a specific account or all accounts
+        /// </summary>
+        /// <param name="accountId">Optional account ID to filter folders</param>
+        /// <param name="allowedAccountIds">List of account IDs the user has access to</param>
+        /// <returns>A list of folder tree nodes representing the folder hierarchy</returns>
+        public async Task<List<FolderTreeNode>> GetFolderTreeAsync(int? accountId, List<int> allowedAccountIds = null)
+        {
+            try
+            {
+                // Build base query for folders
+                var query = _context.ArchivedEmails.AsNoTracking();
+
+                // Filter by account if specified
+                if (accountId.HasValue)
+                {
+                    // Check access permission
+                    if (allowedAccountIds != null && !allowedAccountIds.Contains(accountId.Value))
+                    {
+                        _logger.LogWarning("User attempted to access folder tree for account {AccountId} which is not in their allowed accounts list", accountId.Value);
+                        return new List<FolderTreeNode>();
+                    }
+                    query = query.Where(e => e.MailAccountId == accountId.Value);
+                }
+                else if (allowedAccountIds != null)
+                {
+                    if (allowedAccountIds.Any())
+                    {
+                        query = query.Where(e => allowedAccountIds.Contains(e.MailAccountId));
+                    }
+                    else
+                    {
+                        // User has no allowed accounts
+                        return new List<FolderTreeNode>();
+                    }
+                }
+
+                // Get folder names with counts
+                var folderData = await query
+                    .Where(e => !string.IsNullOrEmpty(e.FolderName))
+                    .GroupBy(e => e.FolderName)
+                    .Select(g => new { FolderName = g.Key, Count = g.Count() })
+                    .ToListAsync();
+
+                if (!folderData.Any())
+                {
+                    return new List<FolderTreeNode>();
+                }
+
+                // Security: Validate folder names to prevent potential injection attacks
+                const int maxFolderNameLength = 500;
+                const int maxTotalFolders = 10000;
+                
+                var validFolderData = folderData
+                    .Where(f => 
+                        f.FolderName != null && 
+                        f.FolderName.Length <= maxFolderNameLength &&
+                        !f.FolderName.Contains("..") && // Prevent path traversal
+                        !f.FolderName.Contains("<") &&  // Prevent XSS
+                        !f.FolderName.Contains(">") &&
+                        !f.FolderName.Contains("javascript:", StringComparison.OrdinalIgnoreCase))
+                    .Take(maxTotalFolders)
+                    .ToList();
+
+                if (validFolderData.Count < folderData.Count)
+                {
+                    _logger.LogWarning("Folder tree validation filtered out {InvalidCount} suspicious folder names for account {AccountId}",
+                        folderData.Count - validFolderData.Count, accountId);
+                }
+
+                return BuildFolderTree(validFolderData.Select(f => (f.FolderName, f.Count)).ToList());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting folder tree for account {AccountId}", accountId);
+                return new List<FolderTreeNode>();
+            }
+        }
+
+        // Builds the folder tree from (folderName, count) pairs. Extracted from GetFolderTreeAsync so
+        // it can be unit-tested. Folder names that differ only in case are treated as one folder
+        // (IMAP INBOX is case-insensitive): their counts are merged and the node is emitted once.
+        //
+        // Intermediate (container) folders that contain no emails themselves — e.g. "travel" and
+        // "travel/2022" when only "travel/2022/France" holds mail — are created as empty parent
+        // nodes so the tree shows the full hierarchy instead of flat "path/to/folder" entries.
+        internal static List<FolderTreeNode> BuildFolderTree(List<(string Name, int Count)> folders)
+        {
+            // Create nodes. If two folders differ only in case (e.g. "INBOX" and "Inbox" from two
+            // accounts) merge their counts into a single node, so the same node is not emitted twice.
+            var allNodes = new Dictionary<string, FolderTreeNode>(StringComparer.OrdinalIgnoreCase);
+            foreach (var folder in folders)
+            {
+                if (string.IsNullOrEmpty(folder.Name))
+                    continue;
+
+                if (allNodes.TryGetValue(folder.Name, out var existing))
+                {
+                    existing.TotalCount += folder.Count;
+                    continue;
+                }
+                allNodes[folder.Name] = new FolderTreeNode
+                {
+                    Name = folder.Name,
+                    FullPath = folder.Name,
+                    TotalCount = folder.Count,
+                    UnreadCount = 0,
+                    Children = new List<FolderTreeNode>()
+                };
+            }
+
+            // Create intermediate parent nodes for nested folders whose container folders hold no
+            // emails and are therefore missing from the data (otherwise the children would render
+            // as flat "a/b/c" root entries).
+            EnsureIntermediateNodes(allNodes);
+
+            // Build parent-child relationships. Iterate the DISTINCT nodes (not the raw folder list),
+            // so each node is placed exactly once; process shortest paths first so parents exist first.
+            var rootNodes = new List<FolderTreeNode>();
+            foreach (var node in allNodes.Values.OrderBy(n => n.FullPath.Length).ThenBy(n => n.FullPath, StringComparer.Ordinal))
+            {
+                string? parentPath = null;
+
+                // Find the nearest existing parent by scanning for hierarchy separators from right to left.
+                // Common IMAP separators: '/' (most servers), '.', '\\' (rare)
+                for (int i = node.FullPath.Length - 1; i >= 0; i--)
+                {
+                    if (node.FullPath[i] == '/' || node.FullPath[i] == '\\' || node.FullPath[i] == '.')
+                    {
+                        var candidate = node.FullPath.Substring(0, i);
+                        if (candidate.Length > 0 && allNodes.ContainsKey(candidate))
+                        {
+                            parentPath = candidate;
+                            break;
+                        }
+                    }
+                }
+
+                if (parentPath != null && allNodes.TryGetValue(parentPath, out var parentNode) && !ReferenceEquals(parentNode, node))
+                {
+                    // Child folder — display name is the suffix after the parent path
+                    node.Name = node.FullPath.Substring(parentPath.Length + 1);
+                    node.Level = parentNode.Level + 1;
+                    parentNode.Children.Add(node);
+                }
+                else
+                {
+                    // Root folder — display name stays as the full folder name
+                    node.Level = 0;
+                    rootNodes.Add(node);
+                }
+            }
+
+            return SortFolderTree(rootNodes);
+        }
+
+        /// <summary>
+        /// Creates intermediate (phantom) parent nodes for folder path prefixes that are missing
+        /// from the data because the container folders hold no emails. Rules per separator:
+        /// '/' and '\\' prefixes are always created — literal slashes in folder names are not
+        /// possible on servers that use them as hierarchy separator. '.' prefixes are only created
+        /// when at least two folders in the data share that exact prefix, so that genuinely dotted
+        /// flat names (e.g. "Mr. Smith", "Project v2.5") are not split into phantom sub-hierarchies.
+        /// </summary>
+        private static void EnsureIntermediateNodes(Dictionary<string, FolderTreeNode> allNodes)
+        {
+            // Snapshot of the data paths (folders that actually contain emails). Only these can
+            // seed prefix creation; created intermediates must not cascade new prefixes themselves
+            // beyond what the data justifies.
+            var dataPaths = allNodes.Keys.ToList();
+
+            foreach (var path in dataPaths)
+            {
+                for (int i = path.Length - 1; i >= 0; i--)
+                {
+                    char c = path[i];
+                    bool hardSeparator = c == '/' || c == '\\';
+                    if (!hardSeparator && c != '.')
+                        continue;
+
+                    var prefix = path.Substring(0, i);
+                    if (prefix.Length == 0 || allNodes.ContainsKey(prefix))
+                        continue;
+
+                    // For dotted names require >=2 sibling folders sharing the prefix, otherwise a
+                    // single folder like "Mr. Smith" would get a phantom "Mr" parent.
+                    if (!hardSeparator && !HasDottedSibling(dataPaths, path, prefix))
+                        continue;
+
+                    allNodes[prefix] = new FolderTreeNode
+                    {
+                        // Name is corrected to the display suffix when the node is attached to
+                        // its parent in the relationship-building pass.
+                        Name = prefix,
+                        FullPath = prefix,
+                        TotalCount = 0,
+                        UnreadCount = 0,
+                        Children = new List<FolderTreeNode>()
+                    };
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns true when at least one OTHER folder in <paramref name="dataPaths"/> also starts
+        /// with <paramref name="prefix"/> followed by a dot, i.e. at least two folders share the
+        /// dotted prefix (case-insensitively).
+        /// </summary>
+        private static bool HasDottedSibling(List<string> dataPaths, string path, string prefix)
+        {
+            var dottedPrefix = prefix + ".";
+            return dataPaths.Any(p =>
+                !string.Equals(p, path, StringComparison.Ordinal) &&
+                p.StartsWith(dottedPrefix, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// Sorts the folder tree with INBOX at the top, then special folders, then alphabetically
+        /// </summary>
+        private static List<FolderTreeNode> SortFolderTree(List<FolderTreeNode> nodes)
+        {
+            if (nodes == null || !nodes.Any())
+                return nodes;
+
+            // Priority order for special folders
+            var priorityFolders = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "inbox", 1 },
+                { "drafts", 2 },
+                { "sent", 3 },
+                { "junk", 4 },
+                { "spam", 5 },
+                { "trash", 6 },
+                { "deleted", 7 },
+                { "archive", 8 }
+            };
+
+            // Sort each level
+            foreach (var node in nodes)
+            {
+                if (node.Children != null && node.Children.Any())
+                {
+                    node.Children = SortFolderTree(node.Children.ToList());
+                }
+            }
+
+            // Sort this level
+            return nodes
+                .OrderBy(n =>
+                {
+                    // Check if this folder or any parent is a priority folder
+                    var lowerName = n.Name.ToLowerInvariant();
+                    if (priorityFolders.TryGetValue(lowerName, out var priority))
+                        return priority;
+                    
+                    // Check if the full path contains a priority folder
+                    var lowerPath = n.FullPath.ToLowerInvariant();
+                    foreach (var pf in priorityFolders)
+                    {
+                        if (lowerPath.StartsWith(pf.Key + "/") || 
+                            lowerPath.StartsWith(pf.Key + ".") ||
+                            lowerPath == pf.Key)
+                            return pf.Value;
+                    }
+                    
+                    return 100; // Default priority for non-special folders
+                })
+                .ThenBy(n => n.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        #endregion
+    }
+}

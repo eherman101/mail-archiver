@@ -1,0 +1,3488 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="EmailArchive" xml:space="preserve">
+    <value>Archive Email</value>
+  </data>
+  <data name="Export" xml:space="preserve">
+    <value>Exporter</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Tableau de bord</value>
+  </data>
+  <data name="Archive" xml:space="preserve">
+    <value>Archive</value>
+  </data>
+  <data name="MailAccounts" xml:space="preserve">
+    <value>Comptes de messagerie</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Utilisateurs</value>
+  </data>
+  <data name="Jobs" xml:space="preserve">
+    <value>Tâches</value>
+  </data>
+  <data name="LastUpdate" xml:space="preserve">
+    <value>Dernière mise à jour :</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Rechercher</value>
+  </data>
+  <data name="SearchTerm" xml:space="preserve">
+    <value>Terme de recherche</value>
+  </data>
+  <data name="From" xml:space="preserve">
+    <value>De</value>
+  </data>
+  <data name="To" xml:space="preserve">
+    <value>À</value>
+  </data>
+  <data name="Account" xml:space="preserve">
+    <value>Compte</value>
+  </data>
+  <data name="Direction" xml:space="preserve">
+    <value>Direction</value>
+  </data>
+  <data name="Reset" xml:space="preserve">
+    <value>Réinitialiser</value>
+  </data>
+  <data name="SelectionMode" xml:space="preserve">
+    <value>Mode de sélection</value>
+  </data>
+  <data name="BatchOperationInformation" xml:space="preserve">
+    <value>Informations sur l'opération par lot</value>
+  </data>
+  <data name="DirectProcessing" xml:space="preserve">
+    <value>Traitement direct</value>
+  </data>
+  <data name="BackgroundJob" xml:space="preserve">
+    <value>Tâche d'arrière-plan</value>
+  </data>
+  <data name="MaximumLimit" xml:space="preserve">
+    <value>Limite maximale</value>
+  </data>
+  <data name="ProcessOnPage" xml:space="preserve">
+    <value>Traiter sur cette page (attendre la fin)</value>
+  </data>
+  <data name="ProcessInBackground" xml:space="preserve">
+    <value>Traiter en arrière-plan (surveiller séparément)</value>
+  </data>
+  <data name="SplitLargerOperations" xml:space="preserve">
+    <value>Diviser les opérations importantes en plusieurs lots</value>
+  </data>
+  <data name="ActiveJobsCurrentlyRunning" xml:space="preserve">
+    <value>{0} tâche(s) active(s) en cours d'exécution</value>
+  </data>
+  <data name="NoBackgroundJobsRunning" xml:space="preserve">
+    <value>Aucune tâche d'arrière-plan en cours d'exécution</value>
+  </data>
+  <data name="MonitorBackgroundJobs" xml:space="preserve">
+    <value>Surveiller les tâches d'arrière-plan</value>
+  </data>
+  <data name="ViewJobHistory" xml:space="preserve">
+    <value>Voir l'historique des tâches</value>
+  </data>
+  <data name="EmailsFound" xml:space="preserve">
+    <value>{0} emails trouvés</value>
+  </data>
+  <data name="PageOf" xml:space="preserve">
+    <value>Page {0} sur {1}</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Tout sélectionner</value>
+  </data>
+  <data name="DeselectAll" xml:space="preserve">
+    <value>Tout désélectionner</value>
+  </data>
+  <data name="CopySelected" xml:space="preserve">
+    <value>Copier la sélection</value>
+  </data>
+  <data name="Subject" xml:space="preserve">
+    <value>Objet</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Attachments" xml:space="preserve">
+    <value>Pièces jointes</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Détails</value>
+  </data>
+  <data name="Out" xml:space="preserve">
+    <value>Sortant</value>
+  </data>
+  <data name="In" xml:space="preserve">
+    <value>Entrant</value>
+  </data>
+  <data name="SelectThisEmail" xml:space="preserve">
+    <value>Sélectionner cet email</value>
+  </data>
+  <data name="Previous" xml:space="preserve">
+    <value>Précédent</value>
+  </data>
+  <data name="Next" xml:space="preserve">
+    <value>Suivant</value>
+  </data>
+  <data name="NoEmailsFoundTitle" xml:space="preserve">
+    <value>Aucun email trouvé</value>
+  </data>
+  <data name="NoEmailsFoundText" xml:space="preserve">
+    <value>Aucun email n'a été trouvé pour les critères de recherche spécifiés.</value>
+  </data>
+  <data name="ExportFormat" xml:space="preserve">
+    <value>Format d'exportation</value>
+  </data>
+  <data name="ExportInformation" xml:space="preserve">
+    <value>Informations d'exportation :</value>
+  </data>
+  <data name="ExportingFilteredResults" xml:space="preserve">
+    <value>Exportation des résultats filtrés basés sur vos critères de recherche actuels.</value>
+  </data>
+  <data name="ExportingAllEmails" xml:space="preserve">
+    <value>Exportation de tous les emails de votre archive.</value>
+  </data>
+  <data name="ExportMayTakeTime" xml:space="preserve">
+    <value>L'exportation peut prendre du temps pour un grand nombre d'emails. Le fichier exporté contiendra jusqu'à 10 000 emails.</value>
+  </data>
+  <data name="EmailsMatchCriteria" xml:space="preserve">
+    <value>{0} emails correspondent à vos critères actuels et seront exportés.</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ExportButton" xml:space="preserve">
+    <value>Exporter</value>
+  </data>
+  <data name="DirectProcessingMode" xml:space="preserve">
+    <value>Traitement direct</value>
+  </data>
+  <data name="BackgroundJobMode" xml:space="preserve">
+    <value>Tâche d'arrière-plan</value>
+  </data>
+  <data name="TooManySelected" xml:space="preserve">
+    <value>Trop nombreux - Division requise</value>
+  </data>
+  <data name="PleaseSelectAtLeastOne" xml:space="preserve">
+    <value>Veuillez sélectionner au moins un email à copier.</value>
+  </data>
+  <data name="TooManyEmailsSelected" xml:space="preserve">
+    <value>Trop d'emails sélectionnés ({0}). Maximum autorisé : {1} emails. Veuillez réduire votre sélection ou diviser en plusieurs opérations.</value>
+  </data>
+  <data name="ContinueWithOperation" xml:space="preserve">
+    <value>Vous avez sélectionné {0} emails. Ceci sera traité comme une tâche d'arrière-plan que vous pouvez surveiller séparément. Continuer ?</value>
+  </data>
+  <data name="ConfirmBatchRestore" xml:space="preserve">
+    <value>Confirmer la restauration par lots</value>
+  </data>
+  <data name="Continue" xml:space="preserve">
+    <value>Continuer</value>
+  </data>
+  <data name="NoEmailsArchivedYet" xml:space="preserve">
+    <value>Aucun email archivé pour le moment</value>
+  </data>
+  <data name="QuickActions" xml:space="preserve">
+    <value>Actions rapides</value>
+  </data>
+  <data name="SearchArchive" xml:space="preserve">
+    <value>Rechercher dans l'archive</value>
+  </data>
+  <data name="AddAccount" xml:space="preserve">
+    <value>Ajouter un compte</value>
+  </data>
+  <data name="ManageAccounts" xml:space="preserve">
+    <value>Gérer les comptes</value>
+  </data>
+  <data name="BackgroundJobs" xml:space="preserve">
+    <value>Tâches d'arrière-plan</value>
+  </data>
+  <data name="ActiveJobs" xml:space="preserve">
+    <value>tâches actives</value>
+  </data>
+  <data name="Emails" xml:space="preserve">
+    <value>Emails</value>
+  </data>
+  <data name="Accounts" xml:space="preserve">
+    <value>Comptes</value>
+  </data>
+  <data name="Storage" xml:space="preserve">
+    <value>Stockage</value>
+  </data>
+  <data name="DatabaseStorage" xml:space="preserve">
+    <value>Taille de la base de données</value>
+  </data>
+  <data name="EmailsPerMonth" xml:space="preserve">
+    <value>Emails par mois</value>
+  </data>
+  <data name="Last12Months" xml:space="preserve">
+    <value>12 derniers mois</value>
+  </data>
+  <data name="TopSenders" xml:space="preserve">
+    <value>Principaux expéditeurs</value>
+  </data>
+  <data name="Incoming" xml:space="preserve">
+    <value>Entrant</value>
+  </data>
+  <data name="AccountOverview" xml:space="preserve">
+    <value>Aperçu des comptes</value>
+  </data>
+  <data name="ShowAll" xml:space="preserve">
+    <value>Tout afficher</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="EmailAddress" xml:space="preserve">
+    <value>Adresse email</value>
+  </data>
+  <data name="Count" xml:space="preserve">
+    <value>Nombre</value>
+  </data>
+  <data name="LastSync" xml:space="preserve">
+    <value>Dernière synchronisation</value>
+  </data>
+  <data name="NoEmailAccountsFound" xml:space="preserve">
+    <value>Aucun compte email trouvé</value>
+  </data>
+  <data name="BackgroundJobsActive" xml:space="preserve">
+    <value>Tâches d'arrière-plan actives :</value>
+  </data>
+  <data name="ViewJobs" xml:space="preserve">
+    <value>Voir les tâches</value>
+  </data>
+  <data name="AttachmentsCount" xml:space="preserve">
+    <value>Pièces jointes</value>
+  </data>
+  <data name="AutoDelete" xml:space="preserve">
+    <value>Suppression automatique</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Enabled" xml:space="preserve">
+    <value>Activé</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>Désactivé</value>
+  </data>
+  <data name="NotSynced" xml:space="preserve">
+    <value>Non synchronisé</value>
+  </data>
+  <data name="SyncRunning" xml:space="preserve">
+    <value>Synchronisation en cours…</value>
+  </data>
+  <data name="SyncPending" xml:space="preserve">
+    <value>Synchronisation en attente…</value>
+  </data>
+  <data name="Days" xml:space="preserve">
+    <value>jours</value>
+  </data>
+  <data name="Server" xml:space="preserve">
+    <value>Serveur</value>
+  </data>
+  <data name="EmailAccounts" xml:space="preserve">
+    <value>Comptes Email</value>
+  </data>
+  <data name="CreateNewUser" xml:space="preserve">
+    <value>Créer un nouvel utilisateur</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Rôle</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Statut</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Créé</value>
+  </data>
+  <data name="LastLogin" xml:space="preserve">
+    <value>Dernière connexion</value>
+  </data>
+  <data name="Admin" xml:space="preserve">
+    <value>Administrateur</value>
+  </data>
+  <data name="User" xml:space="preserve">
+    <value>Utilisateur</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Actif</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inactif</value>
+  </data>
+  <data name="Never" xml:space="preserve">
+    <value>Jamais</value>
+  </data>
+  <data name="Assign" xml:space="preserve">
+    <value>Assigner</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>Désactiver</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>Activer</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="DeleteAccountConfirm" xml:space="preserve">
+    <value>Supprimer le compte {0} et tous les emails archivés ? Cette action ne peut pas être annulée !</value>
+  </data>
+  <data name="DeleteUserConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir supprimer l'utilisateur {0} ? Cette action ne peut pas être annulée.</value>
+  </data>
+  <data name="NoUsersFound" xml:space="preserve">
+    <value>Aucun utilisateur trouvé</value>
+  </data>
+  <data name="AddFirstUser" xml:space="preserve">
+    <value>Ajoutez votre premier utilisateur pour commencer à gérer l'accès à l'archive email.</value>
+  </data>
+  <data name="BackgroundJobsTitle" xml:space="preserve">
+    <value>Tâches d'arrière-plan</value>
+  </data>
+  <data name="BackToArchive" xml:space="preserve">
+    <value>Retour à l'archive</value>
+  </data>
+  <data name="MBoxImportJobs" xml:space="preserve">
+    <value>Tâches d'importation MBox</value>
+  </data>
+  <data name="JobID" xml:space="preserve">
+    <value>ID de tâche</value>
+  </data>
+  <data name="FileName" xml:space="preserve">
+    <value>Nom de fichier</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progression</value>
+  </data>
+  <data name="EmailsLabel" xml:space="preserve">
+    <value>Emails</value>
+  </data>
+  <data name="CreatedLabel" xml:space="preserve">
+    <value>Créé</value>
+  </data>
+  <data name="SynchronizationJobs" xml:space="preserve">
+    <value>Tâches de synchronisation</value>
+  </data>
+  <data name="Last20" xml:space="preserve">
+    <value>20 derniers</value>
+  </data>
+  <data name="Started" xml:space="preserve">
+    <value>Commencé</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>Durée</value>
+  </data>
+  <data name="BatchRestoreJobs" xml:space="preserve">
+    <value>Tâches de restauration par lot</value>
+  </data>
+  <data name="BatchRestore" xml:space="preserve">
+    <value>Restauration par lot</value>
+  </data>
+  <data name="NoBackgroundJobs" xml:space="preserve">
+    <value>Aucune tâche d'arrière-plan</value>
+  </data>
+  <data name="NoActiveBackgroundJobs" xml:space="preserve">
+    <value>Il n'y a actuellement aucune tâche d'arrière-plan active.</value>
+  </data>
+  <data name="ImportMBoxFiles" xml:space="preserve">
+    <value>Importer des fichiers MBox</value>
+  </data>
+  <data name="RecentEmails" xml:space="preserve">
+    <value>Emails récents</value>
+  </data>
+  <data name="SubjectSender" xml:space="preserve">
+    <value>Objet, expéditeur...</value>
+  </data>
+  <data name="ImportMBox" xml:space="preserve">
+    <value>Importer MBox</value>
+  </data>
+  <data name="IMAPSettings" xml:space="preserve">
+    <value>Paramètres IMAP</value>
+  </data>
+  <data name="IMAPServer" xml:space="preserve">
+    <value>Serveur IMAP</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="Sync" xml:space="preserve">
+    <value>Synchroniser</value>
+  </data>
+  <data name="NoEmailAccountsConfigured" xml:space="preserve">
+    <value>Aucun compte email configuré</value>
+  </data>
+  <data name="AddFirstAccount" xml:space="preserve">
+    <value>Ajoutez votre premier compte email pour commencer à archiver des emails ou importer des fichiers MBox existants.</value>
+  </data>
+  <data name="CreateNewEmailAccount" xml:space="preserve">
+    <value>Créer un nouveau compte email</value>
+  </data>
+  <data name="AccountName" xml:space="preserve">
+    <value>Nom du compte</value>
+  </data>
+  <data name="IMAPPort" xml:space="preserve">
+    <value>Port IMAP</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Mot de passe</value>
+  </data>
+  <data name="LeaveEmpty" xml:space="preserve">
+    <value>Laissez vide pour conserver le mot de passe actuel inchangé.</value>
+  </data>
+  <data name="UseSSL" xml:space="preserve">
+    <value>Utilisez SSL ou STARTTLS</value>
+  </data>
+  <data name="AccountEnabled" xml:space="preserve">
+    <value>Compte activé</value>
+  </data>
+  <data name="DisabledAccountsNotSynced" xml:space="preserve">
+    <value>Les comptes désactivés ne seront pas synchronisés</value>
+  </data>
+  <data name="DeleteAfterDays" xml:space="preserve">
+    <value>Supprimer après ... jours</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Enregistrer</value>
+  </data>
+  <data name="BackToList" xml:space="preserve">
+    <value>Retour à la liste</value>
+  </data>
+  <data name="LeaveEmptyToDisableAutomaticDeletion" xml:space="preserve">
+    <value>Laissez vide pour désactiver la suppression automatique</value>
+  </data>
+  <data name="AutoDeleteText" xml:space="preserve">
+    <value>Supprime automatiquement les emails du serveur après qu'ils aient été archivés pendant ce nombre de jours. Laissez vide pour désactiver la suppression automatique.</value>
+  </data>
+  <data name="Authentication" xml:space="preserve">
+    <value>Authentification</value>
+  </data>
+  <data name="EmailDeletion" xml:space="preserve">
+    <value>Suppression d'emails</value>
+  </data>
+  <data name="SyncScheduling" xml:space="preserve">
+    <value>Planification de la synchronisation</value>
+  </data>
+  <data name="SyncIntervalMinutes" xml:space="preserve">
+    <value>Intervalle de sync (minutes)</value>
+  </data>
+  <data name="SyncIntervalMinutesPlaceholder" xml:space="preserve">
+    <value>Paramètres par défaut</value>
+  </data>
+  <data name="SyncIntervalMinutesInfo" xml:space="preserve">
+    <value>Remplace l'intervalle de synchronisation global pour ce compte. Laisser vide pour utiliser la valeur par défaut de appsettings.json.</value>
+  </data>
+  <data name="FullSyncIntervalHours" xml:space="preserve">
+    <value>Intervalle de sync complète (heures)</value>
+  </data>
+  <data name="FullSyncIntervalHoursPlaceholder" xml:space="preserve">
+    <value>Pas de sync complète par compte</value>
+  </data>
+  <data name="FullSyncIntervalHoursInfo" xml:space="preserve">
+    <value>Effectue une resynchronisation complète selon ce calendrier. Laisser vide pour utiliser la valeur globale par défaut de appsettings.json (si définie) ou désactiver la sync complète automatique. La resync manuelle reste disponible dans tous les cas.</value>
+  </data>
+  <data name="DeleteEmailAccountTitle" xml:space="preserve">
+    <value>Supprimer le compte email</value>
+  </data>
+  <data name="PermanentDeletionWarning" xml:space="preserve">
+    <value>AVERTISSEMENT DE SUPPRESSION PERMANENTE</value>
+  </data>
+  <data name="AboutToDeleteAccountAllEmails" xml:space="preserve">
+    <value>Vous êtes sur le point de supprimer définitivement ce compte email et TOUS ses emails archivés.</value>
+  </data>
+  <data name="WhatWillBeDeleted" xml:space="preserve">
+    <value>Ce qui sera supprimé :</value>
+  </data>
+  <data name="DeleteItemAccountConfig" xml:space="preserve">
+    <value>Configuration et paramètres du compte</value>
+  </data>
+  <data name="DeleteItemAllArchivedEmails" xml:space="preserve">
+    <value>Tous les {0} emails archivés</value>
+  </data>
+  <data name="DeleteItemAllAttachments" xml:space="preserve">
+    <value>Toutes les pièces jointes et le contenu des emails</value>
+  </data>
+  <data name="DeleteItemSyncHistory" xml:space="preserve">
+    <value>Historique de synchronisation</value>
+  </data>
+  <data name="ThisAction" xml:space="preserve">
+    <value>Cette action :</value>
+  </data>
+  <data name="ActionCannotBeUndone" xml:space="preserve">
+    <value>Ne peut pas être annulée</value>
+  </data>
+  <data name="ActionCannotBeRecovered" xml:space="preserve">
+    <value>Ne peut pas être récupérée</value>
+  </data>
+  <data name="ActionWillFreeStorage" xml:space="preserve">
+    <value>Libérera de l'espace de stockage de la base de données</value>
+  </data>
+  <data name="ActionWillStopSync" xml:space="preserve">
+    <value>Arrêtera toute synchronisation pour ce compte</value>
+  </data>
+  <data name="Alternative" xml:space="preserve">
+    <value>Alternative :</value>
+  </data>
+  <data name="AlternativeDisableInfo" xml:space="preserve">
+    <value>Si vous voulez seulement arrêter la synchronisation des emails sans perdre de données, vous pouvez désactiver le compte à la place.</value>
+  </data>
+  <data name="DisableAccountInsteadLink" xml:space="preserve">
+    <value>désactiver le compte à la place</value>
+  </data>
+  <data name="AccountToBeDeleted" xml:space="preserve">
+    <value>Compte à supprimer</value>
+  </data>
+  <data name="ArchivedEmails" xml:space="preserve">
+    <value>Emails archivés</value>
+  </data>
+  <data name="ArchivedEmailsWillBeDeleted" xml:space="preserve">
+    <value>{0} emails seront supprimés</value>
+  </data>
+  <data name="FinalConfirmation" xml:space="preserve">
+    <value>Confirmation finale</value>
+  </data>
+  <data name="UnderstandDeletionAcknowledge" xml:space="preserve">
+    <value>Je comprends que cette action supprimera définitivement le compte "{0}" et tous les {1} emails archivés. Cette action ne peut pas être annulée.</value>
+  </data>
+  <data name="CancelKeepAccount" xml:space="preserve">
+    <value>Annuler - Conserver le compte</value>
+  </data>
+  <data name="CancelKeepAccountMessage" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir annuler ? Le compte sera conservé et aucune modification ne sera apportée.</value>
+  </data>
+  <data name="YesCancel" xml:space="preserve">
+    <value>Oui, Annuler</value>
+  </data>
+  <data name="DisableInstead" xml:space="preserve">
+    <value>Désactiver à la place</value>
+  </data>
+  <data name="PermanentlyDeleteAccountAndEmails" xml:space="preserve">
+    <value>SUPPRIMER DÉFINITIVEMENT LE COMPTE ET {0} EMAILS</value>
+  </data>
+  <data name="FinalWarningTitle" xml:space="preserve">
+    <value>AVERTISSEMENT FINAL !</value>
+  </data>
+  <data name="YouAreAboutToDelete" xml:space="preserve">
+    <value>Vous êtes sur le point de SUPPRIMER DÉFINITIVEMENT :</value>
+  </data>
+  <data name="BulletAccount" xml:space="preserve">
+    <value>Compte : "{0}"</value>
+  </data>
+  <data name="BulletArchivedEmails" xml:space="preserve">
+    <value>{0} emails archivés</value>
+  </data>
+  <data name="BulletAllAttachments" xml:space="preserve">
+    <value>Toutes les pièces jointes et données</value>
+  </data>
+  <data name="DeletionCannotBeUndone" xml:space="preserve">
+    <value>Cette action NE PEUT PAS être annulée !</value>
+  </data>
+  <data name="AreYouAbsolutelySure" xml:space="preserve">
+    <value>Êtes-vous absolument sûr ?</value>
+  </data>
+  <data name="EditEmailAccount" xml:space="preserve">
+    <value>Modifier le compte email</value>
+  </data>
+  <data name="FolderExclusion" xml:space="preserve">
+    <value>Exclusion de dossiers</value>
+  </data>
+  <data name="ExcludedFolders" xml:space="preserve">
+    <value>Dossiers exclus</value>
+  </data>
+  <data name="GlobalExcludedFolders" xml:space="preserve">
+    <value>Exclus pour tous les comptes</value>
+  </data>
+  <data name="GlobalExcludedFoldersHint" xml:space="preserve">
+    <value>Configuré pour toute l'installation et appliqué en plus de la liste propre au compte. Non modifiable ici.</value>
+  </data>
+  <data name="FolderAlreadyExcludedGlobally" xml:space="preserve">
+    <value>Déjà exclu pour tous les comptes — rien à modifier ici</value>
+  </data>
+  <data name="ExclusionsCoverSubfolders" xml:space="preserve">
+    <value>Une entrée couvre également les dossiers situés sous celui qu'elle nomme.</value>
+  </data>
+  <data name="FolderAlreadyExcludedGloballyBy" xml:space="preserve">
+    <value>Déjà exclu pour tous les comptes par l'entrée « {0} » : rien à modifier ici</value>
+  </data>
+  <data name="FolderCoveredByOwnEntry" xml:space="preserve">
+    <value>Déjà couvert par l'entrée « {0} » de cette liste, ainsi que tout ce qui se trouve en dessous</value>
+  </data>
+  <data name="EnterFolderNames" xml:space="preserve">
+    <value>Entrez les noms de dossiers séparés par des points-virgules, ex. : Indésirable;Spam;Corbeille</value>
+  </data>
+  <data name="EnterFolderNamesText" xml:space="preserve">
+    <value>Dossiers à exclure de la synchronisation. Entrez les noms de dossiers séparés par des points-virgules.</value>
+  </data>
+  <data name="AvailableFolders" xml:space="preserve">
+    <value>Dossiers disponibles</value>
+  </data>
+  <data name="FoldersOnServer" xml:space="preserve">
+    <value>Ces dossiers sont disponibles sur le serveur IMAP.</value>
+  </data>
+  <data name="AccountDetailsTitle" xml:space="preserve">
+    <value>Détails du compte</value>
+  </data>
+  <data name="EmailAccountDetailsHeader" xml:space="preserve">
+    <value>Détails du compte email</value>
+  </data>
+  <data name="TotalEmails" xml:space="preserve">
+    <value>Total des emails</value>
+  </data>
+  <data name="EmailsArchived" xml:space="preserve">
+    <value>{0} emails archivés</value>
+  </data>
+  <data name="DeletingAccountWillRemoveAllEmails" xml:space="preserve">
+    <value>Supprimer ce compte supprimera définitivement tous les {0} emails archivés</value>
+  </data>
+  <data name="NotYetSynchronized" xml:space="preserve">
+    <value>Pas encore synchronisé</value>
+  </data>
+  <data name="ResetSyncTime" xml:space="preserve">
+    <value>Réinitialiser l'heure de synchronisation</value>
+  </data>
+  <data name="ResetSyncTimeConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir réinitialiser l'heure de synchronisation à l'heure actuelle ? Cela empêchera les erreurs de synchronisation répétées de causer des synchronisations incomplètes, car le système ne synchronisera que les emails plus récents que cette horodatage.</value>
+  </data>
+  <data name="ResetSyncTimeNote" xml:space="preserve">
+    <value>Note : Cela réinitialise l'heure de synchronisation à l'heure actuelle. Cela empêchera les erreurs de synchronisation répétées de causer des synchronisations incomplètes, car le système ne synchronisera que les emails plus récents que cette horodatage.</value>
+  </data>
+  <data name="AutoDeleteEnabledInfo" xml:space="preserve">
+    <value>Les emails seront automatiquement supprimés du serveur après avoir été archivés pendant {0} jours</value>
+  </data>
+  <data name="AutoDeleteDisabledInfo" xml:space="preserve">
+    <value>Les emails ne seront pas automatiquement supprimés du serveur</value>
+  </data>
+  <data name="AccountActions" xml:space="preserve">
+    <value>Actions du compte</value>
+  </data>
+  <data name="EditAccount" xml:space="preserve">
+    <value>Modifier le compte</value>
+  </data>
+  <data name="DisableAccount" xml:space="preserve">
+    <value>Désactiver le compte</value>
+  </data>
+  <data name="EnableAccount" xml:space="preserve">
+    <value>Activer le compte</value>
+  </data>
+  <data name="QuickSync" xml:space="preserve">
+    <value>Synchronisation rapide</value>
+  </data>
+  <data name="FullResync" xml:space="preserve">
+    <value>Resynchronisation complète</value>
+  </data>
+  <data name="CopyAllEmailsToAnotherMailbox" xml:space="preserve">
+    <value>Copier tous les emails vers une autre boîte aux lettres</value>
+  </data>
+  <data name="DangerZone" xml:space="preserve">
+    <value>Zone dangereuse</value>
+  </data>
+  <data name="DangerZoneInfo" xml:space="preserve">
+    <value>Les actions suivantes sont irréversibles et supprimeront définitivement les données.</value>
+  </data>
+  <data name="DeleteAccountAllEmailsButton" xml:space="preserve">
+    <value>Supprimer le compte et tous les emails ({0})</value>
+  </data>
+  <data name="DeleteAccountWithEmailsConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir supprimer ce compte et TOUS les {0} emails archivés ? Cette action ne peut pas être annulée !</value>
+  </data>
+  <data name="BackToAccounts" xml:space="preserve">
+    <value>Retour aux comptes</value>
+  </data>
+  <data name="ImportMBoxFileTitle" xml:space="preserve">
+    <value>Importer un fichier MBox</value>
+  </data>
+  <data name="MBoxImportInformation" xml:space="preserve">
+    <value>Informations sur l'importation MBox :</value>
+  </data>
+  <data name="SupportedFormatsStandard" xml:space="preserve">
+    <value>Formats supportés : Fichiers MBox standard (.mbox, .mbx)</value>
+  </data>
+  <data name="MaximumFileSize" xml:space="preserve">
+    <value>Taille maximale du fichier : {0}</value>
+  </data>
+  <data name="LargeFilesBackground" xml:space="preserve">
+    <value>Les gros fichiers seront traités en arrière-plan</value>
+  </data>
+  <data name="DuplicateEmailsSkipped" xml:space="preserve">
+    <value>Les emails en double seront automatiquement ignorés</value>
+  </data>
+  <data name="AllEmailsImported" xml:space="preserve">
+    <value>Tous les emails seront importés dans le dossier spécifié</value>
+  </data>
+  <data name="UploadAndImportSettings" xml:space="preserve">
+    <value>Paramètres de téléchargement et d'importation</value>
+  </data>
+  <data name="SelectMBoxFile" xml:space="preserve">
+    <value>Sélectionner un fichier MBox</value>
+  </data>
+  <data name="SupportedFormatsWithMax" xml:space="preserve">
+    <value>Formats supportés : fichiers .mbox, .mbx. Taille maximale : {0}</value>
+  </data>
+  <data name="TargetAccount" xml:space="preserve">
+    <value>Compte cible</value>
+  </data>
+  <data name="PlaceholderSelectAccount" xml:space="preserve">
+    <value>-- Sélectionner un compte --</value>
+  </data>
+  <data name="TargetFolder" xml:space="preserve">
+    <value>Dossier cible</value>
+  </data>
+  <data name="PlaceholderSelectAccountFirst" xml:space="preserve">
+    <value>-- Sélectionner d'abord un compte --</value>
+  </data>
+  <data name="FileInformation" xml:space="preserve">
+    <value>Informations sur le fichier :</value>
+  </data>
+  <data name="FileNameLabel" xml:space="preserve">
+    <value>Nom du fichier :</value>
+  </data>
+  <data name="FileSizeLabel" xml:space="preserve">
+    <value>Taille du fichier :</value>
+  </data>
+  <data name="EstimatedProcessingTime" xml:space="preserve">
+    <value>Temps de traitement estimé :</value>
+  </data>
+  <data name="Important" xml:space="preserve">
+    <value>Important :</value>
+  </data>
+  <data name="ImportBackgroundInfo1" xml:space="preserve">
+    <value>Le processus d'importation s'exécutera en arrière-plan pour les gros fichiers.</value>
+  </data>
+  <data name="ImportBackgroundInfo2" xml:space="preserve">
+    <value>Vous pouvez surveiller la progression sur la page de statut après avoir démarré l'importation.</value>
+  </data>
+  <data name="StartImport" xml:space="preserve">
+    <value>Démarrer l'importation</value>
+  </data>
+  <data name="ViewImportJobs" xml:space="preserve">
+    <value>Voir les tâches d'importation</value>
+  </data>
+  <data name="FileSizeExceedsMax" xml:space="preserve">
+    <value>La taille du fichier dépasse la taille maximale autorisée de {0}</value>
+  </data>
+  <data name="LoadingFolders" xml:space="preserve">
+    <value>Chargement des dossiers...</value>
+  </data>
+  <data name="PlaceholderSelectFolder" xml:space="preserve">
+    <value>-- Sélectionner un dossier --</value>
+  </data>
+  <data name="ErrorLoadingFolders" xml:space="preserve">
+    <value>Erreur lors du chargement des dossiers</value>
+  </data>
+  <data name="UploadInProgress" xml:space="preserve">
+    <value>Téléchargement en cours... Veuillez ne pas fermer cette page jusqu'à la redirection.</value>
+  </data>
+  <data name="StartingImport" xml:space="preserve">
+    <value>Démarrage de l'importation...</value>
+  </data>
+  <data name="MBoxImportStatusTitle" xml:space="preserve">
+    <value>Statut de l'importation MBox</value>
+  </data>
+  <data name="AllJobs" xml:space="preserve">
+    <value>Toutes les tâches</value>
+  </data>
+  <data name="ImportJobInformation" xml:space="preserve">
+    <value>Informations sur la tâche d'importation</value>
+  </data>
+  <data name="JobIDLabel" xml:space="preserve">
+    <value>ID de tâche :</value>
+  </data>
+  <data name="StatusLabel" xml:space="preserve">
+    <value>Statut :</value>
+  </data>
+  <data name="EmailsLabelStatus" xml:space="preserve">
+    <value>Emails :</value>
+  </data>
+  <data name="ProcessedSuffix" xml:space="preserve">
+    <value>traités</value>
+  </data>
+  <data name="EstimatedSuffix" xml:space="preserve">
+    <value>estimés</value>
+  </data>
+  <data name="EmailsProcessedSuffix" xml:space="preserve">
+    <value>emails traités</value>
+  </data>
+  <data name="EmailsEstimatedSuffix" xml:space="preserve">
+    <value>emails estimés</value>
+  </data>
+  <data name="Estimating" xml:space="preserve">
+    <value>Estimation en cours...</value>
+  </data>
+  <data name="ProgressLabel" xml:space="preserve">
+    <value>Progression :</value>
+  </data>
+  <data name="ImportComplete" xml:space="preserve">
+    <value>Importation terminée</value>
+  </data>
+  <data name="FileProcessingProgress" xml:space="preserve">
+    <value>Progression du traitement du fichier</value>
+  </data>
+  <data name="ResultsLabel" xml:space="preserve">
+    <value>Résultats :</value>
+  </data>
+  <data name="SuccessLabel" xml:space="preserve">
+    <value>Succès :</value>
+  </data>
+  <data name="FailedLabel" xml:space="preserve">
+    <value>Échoué :</value>
+  </data>
+  <data name="CurrentEmailLabel" xml:space="preserve">
+    <value>Email actuel :</value>
+  </data>
+  <data name="StartedLabel" xml:space="preserve">
+    <value>Commencé :</value>
+  </data>
+  <data name="CompletedLabel" xml:space="preserve">
+    <value>Terminé :</value>
+  </data>
+  <data name="DurationLabel" xml:space="preserve">
+    <value>Durée :</value>
+  </data>
+  <data name="ErrorLabel" xml:space="preserve">
+    <value>Erreur :</value>
+  </data>
+  <data name="CancelImportConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir annuler cette tâche d'importation ?</value>
+  </data>
+  <data name="CancelImport" xml:space="preserve">
+    <value>Annuler l'importation</value>
+  </data>
+  <data name="ImportCompletedTitle" xml:space="preserve">
+    <value>Importation terminée !</value>
+  </data>
+  <data name="ImportCompletedSummary" xml:space="preserve">
+    <value>Importation réussie de {0} emails avec {1} erreurs.</value>
+  </data>
+  <data name="SearchImportedEmails" xml:space="preserve">
+    <value>Rechercher les emails importés</value>
+  </data>
+  <data name="ImportAnotherFile" xml:space="preserve">
+    <value>Importer un autre fichier</value>
+  </data>
+  <data name="MoreEmailsThanEstimated" xml:space="preserve">
+    <value>Plus d'emails trouvés qu'estimé - progression basée sur la taille du fichier</value>
+  </data>
+  <data name="LoginTitle" xml:space="preserve">
+    <value>Connexion</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>Archiveur de Courriels</value>
+  </data>
+  <data name="LoginSubtitle" xml:space="preserve">
+    <value>Veuillez vous connecter pour accéder à l'archive de courriels</value>
+  </data>
+  <data name="UsernameLabel" xml:space="preserve">
+    <value>Nom d'utilisateur</value>
+  </data>
+  <data name="UsernamePlaceholder" xml:space="preserve">
+    <value>Entrez votre nom d'utilisateur</value>
+  </data>
+  <data name="PasswordLabel" xml:space="preserve">
+    <value>Mot de passe</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>Entrez votre mot de passe</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Se souvenir de moi</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Se connecter</value>
+  </data>
+  <data name="AccessDeniedTitle" xml:space="preserve">
+    <value>Accès refusé</value>
+  </data>
+  <data name="AccessDeniedIntro" xml:space="preserve">
+    <value>Vous n'avez pas la permission d'accéder à cette ressource.</value>
+  </data>
+  <data name="AccessDeniedLoggedInInfo1" xml:space="preserve">
+    <value>Vous êtes connecté, mais votre compte n'a pas les permissions requises pour accéder à cette page.</value>
+  </data>
+  <data name="AccessDeniedLoggedInInfo2" xml:space="preserve">
+    <value>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter votre administrateur système.</value>
+  </data>
+  <data name="GoToDashboard" xml:space="preserve">
+    <value>Aller au tableau de bord</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Se déconnecter</value>
+  </data>
+  <data name="RestoreEmailTitle" xml:space="preserve">
+    <value>Restaurer l'email</value>
+  </data>
+  <data name="CopyEmailToMailbox" xml:space="preserve">
+    <value>Copier l'email vers la boîte aux lettres</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="EmailInformation" xml:space="preserve">
+    <value>Informations sur l'email</value>
+  </data>
+  <data name="SubjectLabel" xml:space="preserve">
+    <value>Objet :</value>
+  </data>
+  <data name="FromLabel" xml:space="preserve">
+    <value>De :</value>
+  </data>
+  <data name="DateLabel" xml:space="preserve">
+    <value>Date :</value>
+  </data>
+  <data name="SelectAccountToViewFolders" xml:space="preserve">
+    <value>Sélectionnez d'abord un compte email pour voir les dossiers disponibles.</value>
+  </data>
+  <data name="CopySingleEmailInfo" xml:space="preserve">
+    <value>Cette fonction copie l'email archivé vers le dossier spécifié du compte cible. L'email restera dans l'archive.</value>
+  </data>
+  <data name="CopyEmailButton" xml:space="preserve">
+    <value>Copier l'email</value>
+  </data>
+  <data name="BatchCopyEmailsTitle" xml:space="preserve">
+    <value>Copie par lot d'emails</value>
+  </data>
+  <data name="CopyMultipleEmailsToMailbox" xml:space="preserve">
+    <value>Copier plusieurs emails vers la boîte aux lettres</value>
+  </data>
+  <data name="SelectedEmailsHeader" xml:space="preserve">
+    <value>Emails sélectionnés</value>
+  </data>
+  <data name="SelectedEmailsCountMessage" xml:space="preserve">
+    <value>Vous avez sélectionné {0} emails à copier vers un dossier de boîte aux lettres.</value>
+  </data>
+  <data name="BatchOperationMayTakeTime" xml:space="preserve">
+    <value>Cette opération peut prendre du temps selon le nombre d'emails et leurs tailles.</value>
+  </data>
+  <data name="CopyMultipleEmailsInfo" xml:space="preserve">
+    <value>Cette fonction copie les emails archivés sélectionnés vers le dossier spécifié du compte cible. Les emails resteront dans l'archive.</value>
+  </data>
+  <data name="CopyEmailsButton" xml:space="preserve">
+    <value>Copier les emails</value>
+  </data>
+  <data name="BatchRestoreStatusTitle" xml:space="preserve">
+    <value>Statut de la restauration par lot</value>
+  </data>
+  <data name="JobInformation" xml:space="preserve">
+    <value>Informations sur la tâche</value>
+  </data>
+  <data name="TotalEmailsLabel" xml:space="preserve">
+    <value>Total des emails :</value>
+  </data>
+  <data name="RemainingSuffix" xml:space="preserve">
+    <value>restants</value>
+  </data>
+  <data name="CancelJobConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir annuler cette tâche ?</value>
+  </data>
+  <data name="CancelJob" xml:space="preserve">
+    <value>Annuler la tâche</value>
+  </data>
+  <data name="JobCompletedTitle" xml:space="preserve">
+    <value>Tâche terminée !</value>
+  </data>
+  <data name="JobCompletedSummary" xml:space="preserve">
+    <value>Traité {0} emails avec {1} réussis et {2} échoués.</value>
+  </data>
+  <data name="AsynchronousBatchCopyTitle" xml:space="preserve">
+    <value>Copie par lot asynchrone</value>
+  </data>
+  <data name="LargeOperationDetected" xml:space="preserve">
+    <value>Opération importante détectée :</value>
+  </data>
+  <data name="AsyncBatchCopyIntro" xml:space="preserve">
+    <value>Vous avez sélectionné {0} emails. Cette opération s'exécutera en arrière-plan et vous pourrez surveiller sa progression.</value>
+  </data>
+  <data name="BenefitsHeader" xml:space="preserve">
+    <value>Avantages :</value>
+  </data>
+  <data name="BenefitRunsInBackground" xml:space="preserve">
+    <value>L'opération s'exécute en arrière-plan</value>
+  </data>
+  <data name="BenefitMonitorRealtime" xml:space="preserve">
+    <value>Vous pouvez surveiller la progression en temps réel</value>
+  </data>
+  <data name="BenefitCanCancel" xml:space="preserve">
+    <value>L'opération peut être annulée si nécessaire</value>
+  </data>
+  <data name="BenefitNoTimeout" xml:space="preserve">
+    <value>Votre session de navigateur n'expirera pas</value>
+  </data>
+  <data name="BenefitAutoRetry" xml:space="preserve">
+    <value>Nouvelle tentative automatique en cas d'échecs temporaires</value>
+  </data>
+  <data name="AsyncBatchCopyWarning" xml:space="preserve">
+    <value>Cette opération copiera {0} emails vers le dossier sélectionné. L'opération s'exécutera en arrière-plan et peut prendre {1} minutes pour se terminer.</value>
+  </data>
+  <data name="StartBackgroundOperation" xml:space="preserve">
+    <value>Démarrer l'opération d'arrière-plan</value>
+  </data>
+  <data name="AssignMailAccountsTitle" xml:space="preserve">
+    <value>Assigner des comptes de messagerie</value>
+  </data>
+  <data name="AssignMailAccountsToUser" xml:space="preserve">
+    <value>Assigner des comptes de messagerie à l'utilisateur</value>
+  </data>
+  <data name="UserLabel" xml:space="preserve">
+    <value>Utilisateur :</value>
+  </data>
+  <data name="AvailableMailAccounts" xml:space="preserve">
+    <value>Comptes de messagerie disponibles</value>
+  </data>
+  <data name="NoMailAccountsAvailable" xml:space="preserve">
+    <value>Aucun compte de messagerie disponible.</value>
+  </data>
+  <data name="SaveAssignments" xml:space="preserve">
+    <value>Enregistrer les assignations</value>
+  </data>
+  <data name="ChangePasswordTitle" xml:space="preserve">
+    <value>Changer le mot de passe</value>
+  </data>
+  <data name="BackToDashboard" xml:space="preserve">
+    <value>Retour au tableau de bord</value>
+  </data>
+  <data name="CurrentPassword" xml:space="preserve">
+    <value>Mot de passe actuel</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>Nouveau mot de passe</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>Confirmer le nouveau mot de passe</value>
+  </data>
+  <data name="LeaveBlankToKeepPassword" xml:space="preserve">
+    <value>Laissez vide pour conserver le mot de passe actuel</value>
+  </data>
+  <data name="CreateUserTitle" xml:space="preserve">
+    <value>Créer un utilisateur</value>
+  </data>
+  <data name="EditUserTitle" xml:space="preserve">
+    <value>Modifier l'utilisateur</value>
+  </data>
+  <data name="UserDetailsTitle" xml:space="preserve">
+    <value>Détails de l'utilisateur</value>
+  </data>
+  <data name="UserInformation" xml:space="preserve">
+    <value>Informations sur l'utilisateur</value>
+  </data>
+  <data name="AssignedMailAccounts" xml:space="preserve">
+    <value>Comptes de messagerie assignés</value>
+  </data>
+  <data name="NoMailAccountsAssigned" xml:space="preserve">
+    <value>Aucun compte de messagerie assigné à cet utilisateur.</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Enregistrer les modifications</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="CreateUser" xml:space="preserve">
+    <value>Créer un utilisateur</value>
+  </data>
+  <data name="EditUser" xml:space="preserve">
+    <value>Modifier l'utilisateur</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="ErrorProcessingRequest" xml:space="preserve">
+    <value>Une erreur s'est produite lors du traitement de votre demande.</value>
+  </data>
+  <data name="RequestId" xml:space="preserve">
+    <value>ID de demande :</value>
+  </data>
+  <data name="DevelopmentMode" xml:space="preserve">
+    <value>Mode développement</value>
+  </data>
+  <data name="DevelopmentModeDetail1" xml:space="preserve">
+    <value>Passer à l'environnement de développement affichera des informations plus détaillées sur l'erreur qui s'est produite.</value>
+  </data>
+  <data name="DevelopmentModeDetail2" xml:space="preserve">
+    <value>L'environnement de développement ne devrait pas être activé pour les applications déployées. Il peut entraîner l'affichage d'informations sensibles des exceptions aux utilisateurs finaux. Pour le débogage local, activez l'environnement de développement en définissant la variable d'environnement ASPNETCORE_ENVIRONMENT sur Development et en redémarrant l'application.</value>
+  </data>
+  <data name="EmailDetails" xml:space="preserve">
+    <value>Détails de l'email</value>
+  </data>
+  <data name="ExportEML" xml:space="preserve">
+    <value>Exporter en EML</value>
+  </data>
+  <data name="ExportCSV" xml:space="preserve">
+    <value>Exporter en CSV</value>
+  </data>
+  <data name="ExportJSON" xml:space="preserve">
+    <value>Exporter en JSON</value>
+  </data>
+  <data name="MoreExportOptions" xml:space="preserve">
+    <value>Plus d'options d'exportation</value>
+  </data>
+  <data name="CopyToMailbox" xml:space="preserve">
+    <value>Copier vers la boîte aux lettres</value>
+  </data>
+  <data name="ToggleDropdown" xml:space="preserve">
+    <value>Basculer le menu déroulant</value>
+  </data>
+  <data name="Outgoing" xml:space="preserve">
+    <value>Sortant</value>
+  </data>
+  <data name="Folder" xml:space="preserve">
+    <value>Dossier</value>
+  </data>
+  <data name="CC" xml:space="preserve">
+    <value>CC</value>
+  </data>
+  <data name="EmailContent" xml:space="preserve">
+    <value>Contenu de l'email</value>
+  </data>
+  <data name="FullView" xml:space="preserve">
+    <value>Vue complète</value>
+  </data>
+  <data name="TargetSettings" xml:space="preserve">
+    <value>Paramètres de la cible</value>
+  </data>
+  <data name="Language" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="AdvancedSearch" xml:space="preserve">
+    <value>Recherche avancée</value>
+  </data>
+  <data name="AdvancedSearchInfo1" xml:space="preserve">
+    <value>• Utilisez des guillemets pour les phrases exactes : "réunion importante"</value>
+  </data>
+  <data name="AdvancedSearchInfo2" xml:space="preserve">
+    <value>• Recherche spécifique par champ : subject:facture, from:jean, to:domaine, body:"important"</value>
+  </data>
+  <data name="AdvancedSearchInfo3" xml:space="preserve">
+    <value>• Combinez les deux : "assurance auto" subject:facture from:assurance</value>
+  </data>
+  <data name="Preview" xml:space="preserve">
+    <value>Aperçu</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Télécharger</value>
+  </data>
+  <data name="Deletion" xml:space="preserve">
+    <value>Suppression</value>
+  </data>
+  <data name="PreviewNotAvailable" xml:space="preserve">
+    <value>Aperçu non disponible</value>
+  </data>
+  <data name="FileTypeCannotBePreviewed" xml:space="preserve">
+    <value>Ce type de fichier ne peut pas être prévisualisé. Veuillez télécharger pour voir.</value>
+  </data>
+  <data name="DownloadAllAttachments" xml:space="preserve">
+    <value>Télécharger toutes les pièces jointes</value>
+  </data>
+  <data name="ChangePassword" xml:space="preserve">
+    <value>Changer le mot de passe</value>
+  </data>
+  <data name="Sign Out" xml:space="preserve">
+    <value>Se déconnecter</value>
+  </data>
+  <data name="PasswordHint" xml:space="preserve">
+    <value>Le mot de passe doit comporter au moins 6 caractères.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>Le mot de passe doit comporter au moins 6 caractères.</value>
+  </data>
+  <data name="AllAccounts" xml:space="preserve">
+    <value>Tous les comptes</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>Tous</value>
+  </data>
+  <data name="PasswordRequired" xml:space="preserve">
+    <value>Le mot de passe est requis.</value>
+  </data>
+  <data name="UsernameExists" xml:space="preserve">
+    <value>Le nom d'utilisateur existe déjà.</value>
+  </data>
+  <data name="EmailExists" xml:space="preserve">
+    <value>Email existe déjà.</value>
+  </data>
+  <data name="UserCreatedSuccess" xml:space="preserve">
+    <value>User '{0}' créé avec succès.</value>
+  </data>
+  <data name="ErrorOccurred" xml:space="preserve">
+    <value>Une erreur s'est produite</value>
+  </data>
+  <data name="CannotRemoveAdmin" xml:space="preserve">
+    <value>Impossible de supprimer les droits de l'administration. Au moins un administrateur doit exister.</value>
+  </data>
+  <data name="UserUpdated" xml:space="preserve">
+    <value>L'utilisateur '{0}' a mis à jour avec succès.</value>
+  </data>
+  <data name="UserUpdateFailed" xml:space="preserve">
+    <value>Échec de la mise à jour de l'utilisateur.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>Utilisateur introuvable.</value>
+  </data>
+  <data name="UserDeleteAdmin" xml:space="preserve">
+    <value>Impossible de supprimer le dernier utilisateur administrateur. Au moins un administrateur doit exister.</value>
+  </data>
+  <data name="UserDeleteSuccess" xml:space="preserve">
+    <value>L'utilisateur '{0}' supprimé avec succès.</value>
+  </data>
+  <data name="UserDeleteFail" xml:space="preserve">
+    <value>Échec de la suppression de l'utilisateur '{0}'.</value>
+  </data>
+  <data name="AccountAssignmentSuccess" xml:space="preserve">
+    <value>Affectations de compte de messagerie pour l'utilisateur '{0}' mis à jour avec succès.</value>
+  </data>
+  <data name="PasswordCurrentRequired" xml:space="preserve">
+    <value>Le mot de passe actuel est requis.</value>
+  </data>
+  <data name="PasswordNewRequired" xml:space="preserve">
+    <value>Un nouveau mot de passe est requis.</value>
+  </data>
+  <data name="PasswordNotMatch" xml:space="preserve">
+    <value>Un nouveau mot de passe et une confirmation ne correspondent pas.</value>
+  </data>
+  <data name="PasswordCurrentIncorrect" xml:space="preserve">
+    <value>Le mot de passe actuel est incorrect.</value>
+  </data>
+  <data name="PasswordChangeSuccess" xml:space="preserve">
+    <value>Le mot de passe a changé avec succès.</value>
+  </data>
+  <data name="PasswordChangeFail" xml:space="preserve">
+    <value>Échec de la mise à jour du mot de passe.</value>
+  </data>
+  <data name="CannotDisableAdmin" xml:space="preserve">
+    <value>Impossible de désactiver le dernier utilisateur administrateur. Au moins un administrateur doit exister.</value>
+  </data>
+  <data name="UserChangeActiveSuccess" xml:space="preserve">
+    <value>L'utilisateur '{0}' a été {1}</value>
+  </data>
+  <data name="UserDisabled" xml:space="preserve">
+    <value>désactivé</value>
+  </data>
+  <data name="UserEnabled" xml:space="preserve">
+    <value>activé</value>
+  </data>
+  <data name="UserChangeActiveFail" xml:space="preserve">
+    <value>Échec de {1} utilisateur '{0}'.</value>
+  </data>
+  <data name="EmailAccountError" xml:space="preserve">
+    <value>La connexion au serveur de messagerie n'a pas pu être établie. Veuillez vérifier vos paramètres et vous assurer que le serveur est accessible.</value>
+  </data>
+  <data name="EmailAccountCreateSuccess" xml:space="preserve">
+    <value>Compte de messagerie créé avec succès.</value>
+  </data>
+  <data name="EmailAccountEnabled" xml:space="preserve">
+    <value>Le compte '{0}' a été activé pour la synchronisation.</value>
+  </data>
+  <data name="EmailAccountDisabled" xml:space="preserve">
+    <value>Le compte '{0}' a été désactivé pour la synchronisation.</value>
+  </data>
+  <data name="EmailAccountUpdateSuccess" xml:space="preserve">
+    <value>Compte de messagerie mis à jour avec succès.</value>
+  </data>
+  <data name="EmailAccountDeleteSuccess" xml:space="preserve">
+    <value>Le compte de messagerie et les e-mails associés {0} ont été supprimés avec succès.</value>
+  </data>
+  <data name="SyncStarted" xml:space="preserve">
+    <value>La synchronisation pour '{0}' a été démarrée avec succès.</value>
+    <comment>{0} - account name</comment>
+  </data>
+  <data name="SyncSuccess" xml:space="preserve">
+    <value>La synchronisation pour '{0}' a été achevée avec succès.</value>
+  </data>
+  <data name="SyncFailed" xml:space="preserve">
+    <value>Erreur pendant la synchronisation</value>
+  </data>
+  <data name="FullResyncConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir effectuer une resynchronisation complète ? Cela comparera tout le contenu du serveur avec l'archive et peut prendre beaucoup de temps à terminer.</value>
+  </data>
+  <data name="FullSyncStarted" xml:space="preserve">
+    <value>Resync complet pour '{0}' a été démarré avec succès.</value>
+  </data>
+  <data name="FullSyncFailed" xml:space="preserve">
+    <value>Impossible de démarrer Resync pour '{0}'.</value>
+  </data>
+  <data name="FullSyncError" xml:space="preserve">
+    <value>Erreur pendant la resynchronisation</value>
+  </data>
+  <data name="MoveEmailsNotFound" xml:space="preserve">
+    <value>Aucun e-mail n'a été trouvé pour copier pour ce compte.</value>
+  </data>
+  <data name="TooManyEmailsInAccount" xml:space="preserve">
+    <value>Trop de courriels dans ce compte ({0: n0}). Le maximum autorisé est {1: n0} e-mails par opération. Veuillez utiliser la sélection manuelle avec des lots plus petits.</value>
+  </data>
+  <data name="SelectValidMBoxFile" xml:space="preserve">
+    <value>Veuillez sélectionner un fichier Mbox valide.</value>
+  </data>
+  <data name="MBoxFileTooLarge" xml:space="preserve">
+    <value>La taille du fichier dépasse la taille maximale autorisée de {0}.</value>
+  </data>
+  <data name="SelectedAccountNotFound" xml:space="preserve">
+    <value>Compte sélectionné introuvable.</value>
+  </data>
+  <data name="MBoxImportStarted" xml:space="preserve">
+    <value>Fichier Mbox '{0}' téléchargé avec succès. Le travail d'importation a commencé avec les e-mails estimés {1: n0}.</value>
+  </data>
+  <data name="MBoxImportError" xml:space="preserve">
+    <value>Erreur de démarrage d'importation</value>
+  </data>
+  <data name="InvalidMBoxID" xml:space="preserve">
+    <value>ID de travail d'importation MBOX non valide.</value>
+  </data>
+  <data name="MBoxImportJobNotFound" xml:space="preserve">
+    <value>Travail d'importation MBOX introuvable.</value>
+  </data>
+  <data name="MBoxImportCancelled" xml:space="preserve">
+    <value>Le travail d'importation MBOX a été annulé.</value>
+  </data>
+  <data name="MBoxImportCancelError" xml:space="preserve">
+    <value>Impossible d'annuler le travail d'importation MBOX. Le travail a peut-être déjà terminé ou n'existe pas.</value>
+  </data>
+  <data name="SyncTimeResetSuccess" xml:space="preserve">
+    <value>Le temps de synchronisation a été réinitialisé avec l'heure actuelle. Cela empêchera les erreurs de synchronisation répétées de provoquer des synchronisation incomplète, car le système ne synchronisera que les e-mails plus récents que cet horodatage.</value>
+  </data>
+  <data name="InvalidUserPassword" xml:space="preserve">
+    <value>Nom d'utilisateur ou mot de passe non valide.</value>
+  </data>
+
+  <!-- Self-Manager Feature -->
+  <data name="SelfManager" xml:space="preserve">
+    <value>Auto-Gestionnaire</value>
+  </data>
+
+  <!-- Import-Only Account Feature -->
+  <data name="ImportOnlyAccount" xml:space="preserve">
+    <value>Compte Import Uniquement</value>
+  </data>
+  <data name="ImportOnlyAccountDescription" xml:space="preserve">
+    <value>Compte pour importer des fichiers MBox sans synchronisation IMAP</value>
+  </data>
+  <data name="ImportOnlyAccountNoSync" xml:space="preserve">
+    <value>Les comptes d'import uniquement ne peuvent pas être synchronisés</value>
+  </data>
+
+  <!-- Job Status Translations -->
+  <data name="Running" xml:space="preserve">
+    <value>En cours</value>
+  </data>
+  <data name="Completed" xml:space="preserve">
+    <value>Terminé</value>
+  </data>
+  <data name="Failed" xml:space="preserve">
+    <value>Échec</value>
+  </data>
+  <data name="Cancelled" xml:space="preserve">
+    <value>Annulé</value>
+  </data>
+  <data name="Queued" xml:space="preserve">
+    <value>En attente</value>
+  </data>
+  <data name="Folders" xml:space="preserve">
+    <value>Dossiers</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>Nouveau</value>
+  </data>
+  <data name="Deleted" xml:space="preserve">
+    <value>Supprimé</value>
+  </data>
+
+  <!-- Role Explanations -->
+  <data name="AdminRoleDescription" xml:space="preserve">
+    <value>Accès complet au système incluant la gestion des utilisateurs et tous les comptes de messagerie</value>
+  </data>
+  <data name="SelfManagerRoleDescription" xml:space="preserve">
+    <value>Peut gérer les paramètres de son propre compte ainsi qu’ajouter de nouveaux comptes</value>
+  </data>
+
+  <!-- EML Import -->
+  <data name="ImportEml" xml:space="preserve">
+    <value>Importer EML</value>
+  </data>
+  <data name="ImportEmlFileTitle" xml:space="preserve">
+    <value>Importer un Fichier EML</value>
+  </data>
+  <data name="EmlImportInformation" xml:space="preserve">
+    <value>Informations d'Importation EML :</value>
+  </data>
+  <data name="SupportedFormatsEml" xml:space="preserve">
+    <value>Formats pris en charge : Fichiers ZIP contenant des fichiers EML</value>
+  </data>
+  <data name="EmlFolderStructureInfo" xml:space="preserve">
+    <value>La structure des dossiers dans le ZIP déterminera le dossier de destination pour les emails</value>
+  </data>
+  <data name="SelectEmlFile" xml:space="preserve">
+    <value>Sélectionner un Fichier EML (format ZIP)</value>
+  </data>
+  <data name="SupportedFormatsEmlWithMax" xml:space="preserve">
+    <value>Formats pris en charge : fichiers .zip contenant des fichiers EML. Taille maximale : {0}</value>
+  </data>
+  <data name="EmlImportFolderInfo" xml:space="preserve">
+    <value>Informations d'Importation de Dossier</value>
+  </data>
+  <data name="EmlImportFolderInfoDetail" xml:space="preserve">
+    <value>Les fichiers EML à la racine du ZIP seront importés dans la BOÎTE DE RÉCEPTION. Les fichiers EML dans les sous-dossiers seront importés dans des dossiers portant le même nom que le sous-dossier.</value>
+  </data>
+  <data name="SelectValidEmlFile" xml:space="preserve">
+    <value>Veuillez sélectionner un fichier EML valide (format ZIP).</value>
+  </data>
+  <data name="EmlFileTooLarge" xml:space="preserve">
+    <value>La taille du fichier dépasse la taille maximale autorisée de {0}.</value>
+  </data>
+  <data name="EmlImportStarted" xml:space="preserve">
+    <value>Fichier EML '{0}' téléchargé avec succès. Tâche d'importation démarrée avec environ {1:N0} emails.</value>
+  </data>
+  <data name="EmlImportError" xml:space="preserve">
+    <value>Erreur lors du démarrage de l'importation EML</value>
+  </data>
+  <data name="InvalidEmlID" xml:space="preserve">
+    <value>ID de tâche d'importation EML invalide.</value>
+  </data>
+  <data name="EmlImportJobNotFound" xml:space="preserve">
+    <value>Tâche d'importation EML introuvable.</value>
+  </data>
+  <data name="EmlImportCancelled" xml:space="preserve">
+    <value>La tâche d'importation EML a été annulée.</value>
+  </data>
+  <data name="EmlImportCancelError" xml:space="preserve">
+    <value>Impossible d'annuler la tâche d'importation EML. La tâche peut déjà être terminée ou ne pas exister.</value>
+  </data>
+  <data name="EmlImportStatusTitle" xml:space="preserve">
+    <value>Statut d'Importation EML</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>Importer</value>
+  </data>
+  <!-- Microsoft 365 -->
+  <data name="Microsoft365Account" xml:space="preserve">
+    <value>Compte Microsoft 365</value>
+  </data>
+  <data name="Microsoft365AccountDescription" xml:space="preserve">
+    <value>Compte utilisant l'authentification OAuth2 de Microsoft 365</value>
+  </data>
+  <data name="Microsoft365Settings" xml:space="preserve">
+    <value>Paramètres Microsoft 365</value>
+  </data>
+  <data name="ClientId" xml:space="preserve">
+    <value>ID Client</value>
+  </data>
+  <data name="ClientSecret" xml:space="preserve">
+    <value>Secret Client</value>
+  </data>
+  <data name="LeaveEmptyToKeepCurrent" xml:space="preserve">
+    <value>Laisser vide pour conserver la valeur actuelle</value>
+  </data>
+  <!-- Two-Factor Authentication -->
+  <data name="TwoFactorEnabledSuccess" xml:space="preserve">
+    <value>L'authentification à deux facteurs a été activée avec succès.</value>
+  </data>
+  <data name="TwoFactorEnableFail" xml:space="preserve">
+    <value>Échec de l'activation de l'authentification à deux facteurs. Veuillez réessayer.</value>
+  </data>
+  <data name="TwoFactorDisabledSuccess" xml:space="preserve">
+    <value>L'authentification à deux facteurs a été désactivée avec succès.</value>
+  </data>
+  <data name="TwoFactorDisableFail" xml:space="preserve">
+    <value>Échec de la désactivation de l'authentification à deux facteurs. Veuillez réessayer.</value>
+  </data>
+  <data name="TwoFactorTokenInvalid" xml:space="preserve">
+    <value>Code d'authentification invalide. Veuillez réessayer.</value>
+  </data>
+  <data name="TwoFactorSecretMissing" xml:space="preserve">
+    <value>Le secret à deux facteurs est manquant. Veuillez redémarrer le processus de configuration.</value>
+  </data>
+  <data name="TwoFactorNotEnabled" xml:space="preserve">
+    <value>L'authentification à deux facteurs n'est pas activée pour ce compte.</value>
+  </data>
+  <data name="TwoFactorSessionExpired" xml:space="preserve">
+    <value>Votre session a expiré. Veuillez vous reconnecter.</value>
+  </data>
+  <data name="PasswordIncorrect" xml:space="preserve">
+    <value>Le mot de passe que vous avez saisi est incorrect.</value>
+  </data>
+  <data name="TwoFactorResetSuccess" xml:space="preserve">
+    <value>L'authentification à deux facteurs a été réinitialisée avec succès pour l'utilisateur {0}.</value>
+  </data>
+  <data name="TwoFactorResetFail" xml:space="preserve">
+    <value>Échec de la réinitialisation de l'authentification à deux facteurs pour l'utilisateur {0}.</value>
+  </data>
+  <data name="TwoFactorSetup" xml:space="preserve">
+    <value>Configuration à Deux Facteurs</value>
+  </data>
+  <data name="TwoFactorSetupInstructions" xml:space="preserve">
+    <value>Scannez le code QR avec votre application d'authentification ou saisissez le secret manuellement.</value>
+  </data>
+  <data name="ScanQRCode" xml:space="preserve">
+    <value>Scanner le Code QR</value>
+  </data>
+  <data name="UseAuthenticatorApp" xml:space="preserve">
+    <value>Utilisez une application d'authentification comme Google Authenticator ou Authy pour scanner le code QR.</value>
+  </data>
+  <data name="OrEnterManually" xml:space="preserve">
+    <value>Ou saisissez ce secret manuellement dans votre application d'authentification :</value>
+  </data>
+  <data name="BackupCodes" xml:space="preserve">
+    <value>Codes de Sauvegarde</value>
+  </data>
+  <data name="BackupCodesDescription" xml:space="preserve">
+    <value>Conservez ces codes de sauvegarde dans un endroit sûr. Vous pouvez les utiliser pour vous connecter si vous perdez l'accès à votre application d'authentification.</value>
+  </data>
+  <data name="BackupCodesWarning" xml:space="preserve">
+    <value>Chaque code de sauvegarde ne peut être utilisé qu'une seule fois. Après utilisation d'un code, il sera invalidé.</value>
+  </data>
+  <data name="EnterVerificationCode" xml:space="preserve">
+    <value>Saisir le Code de Vérification</value>
+  </data>
+  <data name="EnableTwoFactor" xml:space="preserve">
+    <value>Activer l'Authentification à Deux Facteurs</value>
+  </data>
+  <data name="TwoFactorVerification" xml:space="preserve">
+    <value>Vérification à Deux Facteurs</value>
+  </data>
+  <data name="TwoFactorAuthentication" xml:space="preserve">
+    <value>Authentification à Deux Facteurs</value>
+  </data>
+  <data name="EnterTwoFactorCode" xml:space="preserve">
+    <value>Saisissez le code de votre application d'authentification ou un code de sauvegarde</value>
+  </data>
+  <data name="VerificationCode" xml:space="preserve">
+    <value>Code de Vérification</value>
+  </data>
+  <data name="EnterCodePlaceholder" xml:space="preserve">
+    <value>Saisir un code à 6 chiffres ou un code de sauvegarde à 16 caractères</value>
+  </data>
+  <data name="EnterTotpOrBackupCode" xml:space="preserve">
+    <value>Saisissez un code TOTP à 6 chiffres de votre application d'authentification ou un code de sauvegarde à 16 caractères</value>
+  </data>
+  <data name="Verify" xml:space="preserve">
+    <value>Vérifier</value>
+  </data>
+  <data name="DisableTwoFactor" xml:space="preserve">
+    <value>Désactiver l'Authentification à Deux Facteurs</value>
+  </data>
+  <data name="DisableTwoFactorConfirmation" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir désactiver l'authentification à deux facteurs ? Cela réduira la sécurité de votre compte.</value>
+  </data>
+  <data name="DisableTwoFactorDescription" xml:space="preserve">
+    <value>Pour désactiver l'authentification à deux facteurs, veuillez saisir votre mot de passe ci-dessous.</value>
+  </data>
+  <data name="EnterPassword" xml:space="preserve">
+    <value>Saisir le Mot de Passe</value>
+  </data>
+  <data name="ScanQRCodeDescription" xml:space="preserve">
+    <value>Scannez ce code QR avec votre application d'authentification pour configurer l'authentification à deux facteurs.</value>
+  </data>
+  <data name="ManualEntryDescription" xml:space="preserve">
+    <value>Si vous ne pouvez pas scanner le code QR, saisissez ce secret manuellement dans votre application d'authentification :</value>
+  </data>
+  <data name="VerifyTwoFactor" xml:space="preserve">
+    <value>Vérifier l'Authentification à Deux Facteurs</value>
+  </data>
+  <data name="EnterCodeDescription" xml:space="preserve">
+    <value>Saisissez le code à 6 chiffres de votre application d'authentification pour vérifier et activer l'authentification à deux facteurs.</value>
+  </data>
+  <data name="DownloadBackupCodes" xml:space="preserve">
+    <value>Télécharger les Codes de Sauvegarde</value>
+  </data>
+  <data name="BackupCodesFileHeader" xml:space="preserve">
+    <value>Mail Archiver - Codes de Sauvegarde d'Authentification à Deux Facteurs. Conservez ces codes de sauvegarde dans un endroit sûr. Vous pouvez les utiliser pour vous connecter si vous perdez l'accès à votre application d'authentification. Chaque code de sauvegarde ne peut être utilisé qu'une seule fois. Après utilisation d'un code, il sera invalidé.</value>
+  </data>
+  <data name="BackupCodesFileFooter" xml:space="preserve">
+    <value>Important : Gardez ces codes en sécurité et ne les partagez avec personne.</value>
+  </data>
+  <data name="BackupCodesOneTimeOnly" xml:space="preserve">
+    <value>Ces codes de sauvegarde sont à usage unique seulement. Après utilisation d'un code, il sera invalidé.</value>
+  </data>
+  <data name="ContinueToDashboard" xml:space="preserve">
+    <value>Continuer vers le Tableau de Bord</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="EnterCodeFromApp" xml:space="preserve">
+    <value>Saisissez le code de votre application d'authentification</value>
+  </data>
+  <data name="ManualEntry" xml:space="preserve">
+    <value>Saisie Manuelle</value>
+  </data>
+  <data name="EnterCode" xml:space="preserve">
+    <value>Saisir le Code</value>
+  </data>
+
+  <!-- Rate Limiting -->
+  <data name="RateLimitExceeded" xml:space="preserve">
+    <value>Limite de débit dépassée. Veuillez réessayer plus tard.</value>
+  </data>
+  <data name="TooManyAttempts" xml:space="preserve">
+    <value>Trop de tentatives. Veuillez attendre {0} secondes avant de réessayer.</value>
+  </data>
+  <data name="RateLimitTwoFactorTitle" xml:space="preserve">
+    <value>Trop de Tentatives</value>
+  </data>
+  <data name="RateLimitTwoFactorMessage" xml:space="preserve">
+    <value>Vous avez fait trop de tentatives de vérification 2FA. Veuillez attendre et réessayer plus tard.</value>
+  </data>
+
+  <!-- Account Export Feature -->
+  <data name="ExportAccount" xml:space="preserve">
+    <value>Exporter le Compte</value>
+  </data>
+  <data name="ExportAccountTitle" xml:space="preserve">
+    <value>Exporter le Compte de Messagerie</value>
+  </data>
+  <data name="ExportAccountDescription" xml:space="preserve">
+    <value>Exporter tous les e-mails de ce compte vers des fichiers téléchargeables</value>
+  </data>
+  <data name="ExportAccountInfo" xml:space="preserve">
+    <value>Informations d'Exportation du Compte</value>
+  </data>
+  <data name="ExportAccountInfoDetail" xml:space="preserve">
+    <value>Exporter tous les e-mails de ce compte de messagerie. Selon le format sélectionné, vous recevrez un fichier ZIP contenant tous les e-mails.</value>
+  </data>
+  <data name="ExportFormatLabel" xml:space="preserve">
+    <value>Format d'Exportation</value>
+  </data>
+  <data name="ExportFormatEML" xml:space="preserve">
+    <value>EML (Fichiers d'E-mail Individuels)</value>
+  </data>
+  <data name="ExportFormatMBox" xml:space="preserve">
+    <value>MBox (Format de Boîte aux Lettres)</value>
+  </data>
+  <data name="ExportFormatEMLDescription" xml:space="preserve">
+    <value>Crée un fichier ZIP avec des dossiers séparés pour les e-mails entrants et sortants, contenant des fichiers .eml individuels</value>
+  </data>
+  <data name="ExportFormatMBoxDescription" xml:space="preserve">
+    <value>Crée un fichier ZIP avec deux fichiers .mbox (in.mbox et out.mbox) contenant tous les e-mails</value>
+  </data>
+  <data name="StartExport" xml:space="preserve">
+    <value>Démarrer l'Exportation</value>
+  </data>
+  <data name="ExportJobStarted" xml:space="preserve">
+    <value>Tâche d'exportation démarrée pour le compte '{0}'. Vous serez redirigé vers la page de statut.</value>
+  </data>
+  <data name="ExportStatusTitle" xml:space="preserve">
+    <value>Statut d'Exportation</value>
+  </data>
+  <data name="ExportJobInformation" xml:space="preserve">
+    <value>Informations de la Tâche d'Exportation</value>
+  </data>
+  <data name="ExportJobStatus" xml:space="preserve">
+    <value>Statut de la Tâche d'Exportation</value>
+  </data>
+  <data name="ExportProgress" xml:space="preserve">
+    <value>Progression de l'Exportation</value>
+  </data>
+  <data name="EmailsExported" xml:space="preserve">
+    <value>E-mails Exportés</value>
+  </data>
+  <data name="ExportCompleted" xml:space="preserve">
+    <value>Exportation Terminée</value>
+  </data>
+  <data name="ExportFailed" xml:space="preserve">
+    <value>Exportation Échouée</value>
+  </data>
+  <data name="ExportCancelled" xml:space="preserve">
+    <value>Exportation Annulée</value>
+  </data>
+  <data name="ExportInProgress" xml:space="preserve">
+    <value>Exportation en Cours</value>
+  </data>
+  <data name="ExportQueued" xml:space="preserve">
+    <value>Exportation en File d'Attente</value>
+  </data>
+  <data name="DownloadExport" xml:space="preserve">
+    <value>Télécharger l'Exportation</value>
+  </data>
+  <data name="DownloadReady" xml:space="preserve">
+    <value>Téléchargement Prêt</value>
+  </data>
+  <data name="DownloadStarting" xml:space="preserve">
+    <value>Démarrage du Téléchargement...</value>
+  </data>
+  <data name="CancelExport" xml:space="preserve">
+    <value>Annuler l'Exportation</value>
+  </data>
+  <data name="ExportJobCancelled" xml:space="preserve">
+    <value>La tâche d'exportation a été annulée.</value>
+  </data>
+  <data name="ExportJobCancelError" xml:space="preserve">
+    <value>Impossible d'annuler la tâche d'exportation. La tâche peut avoir déjà terminé ou n'existe pas.</value>
+  </data>
+  <data name="ExportNotFound" xml:space="preserve">
+    <value>Tâche d'exportation non trouvée.</value>
+  </data>
+  <data name="ExportDownloadNotReady" xml:space="preserve">
+    <value>Le téléchargement de l'exportation n'est pas encore prêt. Veuillez attendre que l'exportation soit terminée.</value>
+  </data>
+  <data name="ExportFileNotFound" xml:space="preserve">
+    <value>Fichier d'exportation non trouvé. Le fichier peut avoir été nettoyé ou l'exportation a échoué.</value>
+  </data>
+  <data name="ExportStarted" xml:space="preserve">
+    <value>Tâche d'exportation démarrée pour le compte '{0}'. Vous serez redirigé vers la page de statut.</value>
+  </data>
+  <data name="ExportError" xml:space="preserve">
+    <value>Erreur lors de l'exportation</value>
+  </data>
+  <data name="InvalidExportID" xml:space="preserve">
+    <value>ID de tâche d'exportation invalide.</value>
+  </data>
+  <data name="ExportJobNotFound" xml:space="preserve">
+    <value>Tâche d'exportation non trouvée.</value>
+  </data>
+  <data name="ExportCancelError" xml:space="preserve">
+    <value>Impossible d'annuler la tâche d'exportation. La tâche peut avoir déjà terminé ou n'existe pas.</value>
+  </data>
+  <data name="IncomingEmails" xml:space="preserve">
+    <value>E-mails Entrants</value>
+  </data>
+  <data name="OutgoingEmails" xml:space="preserve">
+    <value>E-mails Sortants</value>
+  </data>
+  <data name="AccountExportJobs" xml:space="preserve">
+    <value>Tâches d'Exportation de Compte</value>
+  </data>
+  <data name="FileCreated" xml:space="preserve">
+    <value>Fichier Créé</value>
+  </data>
+  <data name="FileSize" xml:space="preserve">
+    <value>Taille du Fichier</value>
+  </data>
+  <data name="BackToExport" xml:space="preserve">
+    <value>Retour à l'Exportation</value>
+  </data>
+  <data name="RefreshStatus" xml:space="preserve">
+    <value>Actualiser le Statut</value>
+  </data>
+  <data name="AutoRefresh" xml:space="preserve">
+    <value>Actualisation automatique toutes les 3 secondes</value>
+  </data>
+  <!-- Missing Export Strings -->
+  <data name="NoEmailsToExport" xml:space="preserve">
+    <value>Aucun e-mail disponible pour l'exportation dans ce compte.</value>
+  </data>
+  <data name="ExportInfo" xml:space="preserve">
+    <value>Informations d'Exportation</value>
+  </data>
+  <data name="ExportInfoText" xml:space="preserve">
+    <value>Cette exportation créera un fichier ZIP téléchargeable contenant tous les e-mails de ce compte. Le format que vous choisissez détermine comment les e-mails sont organisés.</value>
+  </data>
+  <data name="EMLFormat" xml:space="preserve">
+    <value>Format EML</value>
+  </data>
+  <data name="MBoxFormat" xml:space="preserve">
+    <value>Format MBox</value>
+  </data>
+  <data name="EMLFormatInfo" xml:space="preserve">
+    <value>Informations du Format EML</value>
+  </data>
+  <data name="EMLFormatDescription" xml:space="preserve">
+    <value>Crée des fichiers .eml individuels organisés dans des dossiers 'in' et 'out' pour les e-mails entrants et sortants respectivement.</value>
+  </data>
+  <data name="MBoxFormatInfo" xml:space="preserve">
+    <value>Informations du Format MBox</value>
+  </data>
+  <data name="MBoxFormatDescription" xml:space="preserve">
+    <value>Crée des fichiers de boîte aux lettres traditionnels (in.mbox et out.mbox) contenant tous les e-mails entrants et sortants dans un fichier chacun.</value>
+  </data>
+  <data name="ExportWarning" xml:space="preserve">
+    <value>Informations Importantes d'Exportation</value>
+  </data>
+  <data name="ExportWarningTime" xml:space="preserve">
+    <value>Les gros comptes peuvent prendre plusieurs minutes à exporter et s'exécuteront en arrière-plan</value>
+  </data>
+  <data name="ExportWarningSize" xml:space="preserve">
+    <value>Le fichier ZIP résultant peut être assez volumineux selon le volume d'e-mails et les pièces jointes</value>
+  </data>
+  <data name="ExportWarningCleanup" xml:space="preserve">
+    <value>Les fichiers d'exportation sont automatiquement supprimés après le téléchargement ou après 7 jours</value>
+  </data>
+  <data name="ConfirmExport" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir démarrer l'exportation ? Cela traitera tous les e-mails de ce compte.</value>
+  </data>
+  <data name="BackToAccount" xml:space="preserve">
+    <value>Retour au Compte</value>
+  </data>
+  <data name="CurrentEmail" xml:space="preserve">
+    <value>E-mail Actuel</value>
+  </data>
+  <data name="ProcessedEmails" xml:space="preserve">
+    <value>E-mails Traités</value>
+  </data>
+  <data name="ExportStatus" xml:space="preserve">
+    <value>Statut d'Exportation</value>
+  </data>
+  <data name="Downloaded" xml:space="preserve">
+    <value>Téléchargé</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Erreur</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Actualiser</value>
+  </data>
+
+  <!-- Export Format Selection Modal -->
+  <data name="ExportFormatSelection" xml:space="preserve">
+    <value>Sélection du Format d'Exportation</value>
+  </data>
+  <data name="ExportFormatSelectionInfo" xml:space="preserve">
+    <value>Choisissez le format pour votre exportation d'e-mail. Chaque format a des avantages différents selon vos besoins.</value>
+  </data>
+  <data name="ExportSelectedInfo" xml:space="preserve">
+    <value>L'exportation s'exécutera en arrière-plan et vous pourrez télécharger le résultat depuis la page Tâches une fois terminé.</value>
+  </data>
+
+  <!-- Selected Emails Export Feature -->
+  <data name="ExportSelected" xml:space="preserve">
+    <value>Exporter la Sélection</value>
+  </data>
+  <data name="SelectedEmailsExportStatusTitle" xml:space="preserve">
+    <value>Statut d'Exportation des E-mails Sélectionnés</value>
+  </data>
+  <data name="SelectedEmailsExportJobs" xml:space="preserve">
+    <value>Tâches d'Exportation des E-mails Sélectionnés</value>
+  </data>
+  <data name="SelectedEmailsExport" xml:space="preserve">
+    <value>Exportation des E-mails Sélectionnés</value>
+  </data>
+  <data name="ExportSelectedEmails" xml:space="preserve">
+    <value>Exporter les E-mails Sélectionnés</value>
+  </data>
+  <data name="SelectedEmailsExportComplete" xml:space="preserve">
+    <value>Exportation des e-mails sélectionnés terminée avec succès. {0} e-mails ont été exportés.</value>
+  </data>
+  <data name="SelectedEmailsExportFailed" xml:space="preserve">
+    <value>L'exportation des e-mails sélectionnés a échoué. Veuillez vérifier les journaux pour plus de détails.</value>
+  </data>
+  <data name="SelectedEmailsExportCancelled" xml:space="preserve">
+    <value>L'exportation des e-mails sélectionnés a été annulée.</value>
+  </data>
+  <data name="EMLImportJobs" xml:space="preserve">
+    <value>Tâches d'Importation EML</value>
+  </data>
+
+  <!-- EmailsController Messages -->
+  <data name="EmailHasNoAttachments" xml:space="preserve">
+    <value>Cet e-mail n'a pas de pièces jointes.</value>
+  </data>
+  <data name="NoAccessToEmail" xml:space="preserve">
+    <value>Vous n'avez pas accès à cet e-mail.</value>
+  </data>
+  <data name="EmailNotFound" xml:space="preserve">
+    <value>L'e-mail n'a pas pu être trouvé.</value>
+  </data>
+  <data name="EmailCopiedSuccessfully" xml:space="preserve">
+    <value>L'e-mail a été copié avec succès dans le dossier spécifié.</value>
+  </data>
+  <data name="EmailCopyFailed" xml:space="preserve">
+    <value>L'e-mail n'a pas pu être copié dans le dossier spécifié. Veuillez vérifier les journaux.</value>
+  </data>
+  <data name="NoEmailsSelectedForBatch" xml:space="preserve">
+    <value>Aucun e-mail sélectionné pour l'opération par lots.</value>
+  </data>
+  <data name="NoEmailsCopiedCheckLogs" xml:space="preserve">
+    <value>Aucun des e-mails sélectionnés n'a pu être copié. Veuillez vérifier les journaux pour les détails.</value>
+  </data>
+  <data name="MailAccountNotFound" xml:space="preserve">
+    <value>Compte de messagerie non trouvé.</value>
+  </data>
+  <data name="NoEmailsFoundForAccount" xml:space="preserve">
+    <value>Aucun e-mail trouvé à copier pour ce compte.</value>
+  </data>
+  <data name="TooManyEmailsToProcess" xml:space="preserve">
+    <value>Trop d'e-mails à traiter. Veuillez essayer avec une sélection plus petite.</value>
+  </data>
+  <data name="TooManyEmailsSelectFewer" xml:space="preserve">
+    <value>Trop d'e-mails sélectionnés. Veuillez sélectionner moins d'e-mails et réessayer.</value>
+  </data>
+  <data name="NoEnabledEmailAccounts" xml:space="preserve">
+    <value>Aucun compte de messagerie activé trouvé.</value>
+  </data>
+  <data name="AsyncBatchRestoreNotAvailable" xml:space="preserve">
+    <value>La restauration par lots asynchrone n'est pas disponible.</value>
+  </data>
+  <data name="BatchRestoreServiceNotAvailable" xml:space="preserve">
+    <value>Le service de restauration par lots n'est pas disponible.</value>
+  </data>
+  <data name="InvalidJobID" xml:space="preserve">
+    <value>ID de tâche invalide.</value>
+  </data>
+  <data name="BatchRestoreJobNotFound" xml:space="preserve">
+    <value>Tâche de restauration par lots non trouvée.</value>
+  </data>
+  <data name="BatchRestoreJobCancelled" xml:space="preserve">
+    <value>La tâche de restauration par lots a été annulée.</value>
+  </data>
+  <data name="CouldNotCancelBatchRestoreJob" xml:space="preserve">
+    <value>Impossible d'annuler la tâche de restauration par lots.</value>
+  </data>
+  <data name="SyncJobServiceNotAvailable" xml:space="preserve">
+    <value>Le service de tâche de synchronisation n'est pas disponible.</value>
+  </data>
+  <data name="SyncJobCancelled" xml:space="preserve">
+    <value>La tâche de synchronisation a été annulée.</value>
+  </data>
+  <data name="CouldNotCancelSyncJob" xml:space="preserve">
+    <value>Impossible d'annuler la tâche de synchronisation.</value>
+  </data>
+  <data name="SelectedEmailsExportServiceNotAvailable" xml:space="preserve">
+    <value>Le service d'exportation des e-mails sélectionnés n'est pas disponible.</value>
+  </data>
+  <data name="SelectedEmailsExportJobNotFound" xml:space="preserve">
+    <value>Tâche d'exportation des e-mails sélectionnés non trouvée.</value>
+  </data>
+  <data name="SelectedEmailsExportJobCancelled" xml:space="preserve">
+    <value>La tâche d'exportation des e-mails sélectionnés a été annulée.</value>
+  </data>
+  <data name="CouldNotCancelSelectedEmailsExportJob" xml:space="preserve">
+    <value>Impossible d'annuler la tâche d'exportation des e-mails sélectionnés.</value>
+  </data>
+  <data name="SelectedEmailsExportNotCompleted" xml:space="preserve">
+    <value>La tâche d'exportation des e-mails sélectionnés n'est pas encore terminée ou a déjà été téléchargée.</value>
+  </data>
+  <data name="ErrorDownloadingExportFile" xml:space="preserve">
+    <value>Erreur lors du téléchargement du fichier d'exportation.</value>
+  </data>
+  <data name="ExportParametersInvalid" xml:space="preserve">
+    <value>Les paramètres d'exportation sont invalides. Veuillez réessayer.</value>
+  </data>
+  <data name="NoAccessToSelectedAccount" xml:space="preserve">
+    <value>Vous n'avez pas accès au compte sélectionné.</value>
+  </data>
+  <data name="NoEmailsSelectedForExport" xml:space="preserve">
+    <value>Aucun e-mail sélectionné pour l'exportation.</value>
+  </data>
+  <data name="SelectedEmailsExportNotAvailable" xml:space="preserve">
+    <value>L'exportation des e-mails sélectionnés n'est pas disponible.</value>
+  </data>
+  <data name="NoAccessToSelectedEmails" xml:space="preserve">
+    <value>Vous n'avez accès à aucun des e-mails sélectionnés.</value>
+  </data>
+  <data name="ExportFailedWithError" xml:space="preserve">
+    <value>L'exportation a échoué : {0}</value>
+  </data>
+  <data name="ErrorOccurredWithMessage" xml:space="preserve">
+    <value>Une erreur s'est produite : {0}</value>
+  </data>
+  <data name="TooManyEmailsSelectedWithLimits" xml:space="preserve">
+    <value>Trop d'e-mails sélectionnés ({0:N0}). Le maximum autorisé est {1:N0} e-mails par opération.</value>
+  </data>
+  <data name="TooManyEmailsForDirectProcessing" xml:space="preserve">
+    <value>Trop d'e-mails sélectionnés pour le traitement direct ({0:N0}). Le maximum pour le traitement direct est {1:N0} e-mails.</value>
+  </data>
+  <data name="AllEmailsCopiedSuccessfully" xml:space="preserve">
+    <value>Tous les {0} e-mails ont été copiés avec succès dans le dossier spécifié.</value>
+  </data>
+  <data name="EmailsCopiedWithSomeFailures" xml:space="preserve">
+    <value>{0} e-mails ont été copiés, mais {1} n'ont pas pu être copiés. Vérifiez les journaux pour les détails.</value>
+  </data>
+  <data name="TooManyEmailsInAccountWithLimits" xml:space="preserve">
+    <value>Trop d'e-mails dans ce compte ({0:N0}). Le maximum autorisé est {1:N0} e-mails par opération.</value>
+  </data>
+  <data name="BatchRestoreJobStartedWithDetails" xml:space="preserve">
+    <value>Tâche de restauration par lots démarrée avec {0:N0} e-mails. ID de tâche : {1}</value>
+  </data>
+  <data name="FailedToStartBatchRestore" xml:space="preserve">
+    <value>Échec du démarrage de la restauration par lots : {0}</value>
+  </data>
+  <data name="ExportJobStartedWithDetails" xml:space="preserve">
+    <value>Tâche d'exportation démarrée avec {0:N0} e-mails au format {1}. ID de tâche : {2}</value>
+  </data>
+  <data name="FailedToStartExport" xml:space="preserve">
+    <value>Échec du démarrage de l'exportation : {0}</value>
+  </data>
+  <data name="ExportCompletedTitle" xml:space="preserve">
+    <value>Exportation Terminée !</value>
+  </data>
+  <data name="ExportCompletedSummary" xml:space="preserve">
+    <value>Exporté avec succès {0} e-mails sélectionnés.</value>
+  </data>
+  <data name="SelectedOf" xml:space="preserve">
+    <value>{0} sur {1} sélectionnés</value>
+  </data>
+  <data name="MaxSelectionsReached" xml:space="preserve">
+    <value>Maximum de sélections atteint ({0})</value>
+  </data>
+  <data name="SelectAllOnPage" xml:space="preserve">
+    <value>Sélectionner tout sur la page</value>
+  </data>
+  <data name="DeselectAllOnPage" xml:space="preserve">
+    <value>Désélectionner tout sur la page</value>
+  </data>
+  <data name="DeleteAccountWithEmailsButton" xml:space="preserve">
+    <value>Supprimer le compte et tous les e-mails ({0})</value>
+  </data>
+  <data name="AccessLog" xml:space="preserve">
+    <value>Journal d'accès</value>
+  </data>
+  <data name="AccessLogEntries" xml:space="preserve">
+    <value>Entrées du journal d'accès</value>
+  </data>
+  <data name="EmailSubject" xml:space="preserve">
+    <value>Objet de l'e-mail</value>
+  </data>
+  <data name="Filter" xml:space="preserve">
+    <value>Filtrer</value>
+  </data>
+  <data name="FromDate" xml:space="preserve">
+    <value>De</value>
+  </data>
+  <data name="Info" xml:space="preserve">
+    <value>Info</value>
+  </data>
+  <data name="Log" xml:space="preserve">
+    <value>Journal</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Connexion</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Déconnexion</value>
+  </data>
+  <data name="NoAccessLogEntries" xml:space="preserve">
+    <value>Aucune entrée de journal d'accès trouvée</value>
+  </data>
+  <data name="NoInfo" xml:space="preserve">
+    <value>Aucune information</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Ouvrir</value>
+  </data>
+  <data name="Restore" xml:space="preserve">
+    <value>Restaurer</value>
+  </data>
+  <data name="SearchParameters" xml:space="preserve">
+    <value>Paramètres de recherche</value>
+  </data>
+  <data name="Timestamp" xml:space="preserve">
+    <value>Horodatage</value>
+  </data>
+  <data name="ToDate" xml:space="preserve">
+    <value>À</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="EmailNotFoundTitle" xml:space="preserve">
+    <value>Email Introuvable</value>
+  </data>
+  <data name="EmailNotFoundMessage" xml:space="preserve">
+    <value>L'email que vous recherchez n'existe pas ou a été supprimé.</value>
+  </data>
+  <data name="BackToEmails" xml:space="preserve">
+    <value>Retour aux Archives Email</value>
+  </data>
+  <data name="EmailNotFoundHelp" xml:space="preserve">
+    <value>Si vous pensez qu'il s'agit d'une erreur, veuillez contacter votre administrateur système.</value>
+  </data>
+  <data name="ConfirmDeletion" xml:space="preserve">
+    <value>Confirmer la Suppression</value>
+  </data>
+  <data name="DeleteButton" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="DeleteEmail" xml:space="preserve">
+    <value>Supprimer l'Email</value>
+  </data>
+  <data name="DeleteEmailConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir supprimer définitivement cet email ? Cette action ne peut pas être annulée et sera enregistrée à des fins d'audit.</value>
+  </data>
+  <data name="DeleteSelected" xml:space="preserve">
+    <value>Supprimer la Sélection</value>
+  </data>
+  <data name="DeleteSelectedEmailsConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir supprimer définitivement {0} email(s) sélectionné(s) ? Cette action ne peut pas être annulée et chaque suppression sera enregistrée à des fins d'audit.</value>
+  </data>
+  <data name="EmailDeleted" xml:space="preserve">
+    <value>Email supprimé avec succès</value>
+  </data>
+  <data name="EmailsDeleted" xml:space="preserve">
+    <value>{0} email(s) supprimé(s) avec succès</value>
+  </data>
+  <data name="AttachmentPreview" xml:space="preserve">
+    <value>Aperçu de la pièce jointe</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Fermer</value>
+  </data>
+  <data name="AllFolders" xml:space="preserve">
+    <value>Tous les dossiers</value>
+  </data>
+  <data name="Reply" xml:space="preserve">
+    <value>Répondre</value>
+  </data>
+  <data name="LocalRetentionDays" xml:space="preserve">
+    <value>Jours de rétention locale</value>
+  </data>
+  <data name="LocalRetentionInfo" xml:space="preserve">
+      <value>Nombre de jours après lesquels les e-mails sont supprimés de l'archive locale. Laissez vide pour conserver les e-mails indéfiniment. Doit être supérieur ou égal à 'Supprimer après X jours' si les deux sont définis.</value>
+  </data>
+  <data name="LocalRetentionMustBeGreaterOrEqual" xml:space="preserve">
+      <value>Les jours de rétention locale doivent être supérieurs ou égaux aux jours de suppression pour garantir que les e-mails ne sont pas supprimés de l'archive locale avant de l'être du serveur de messagerie.</value>
+  </data>
+  <data name="LocalRetentionRequiresServerRetention" xml:space="preserve">
+      <value>La rétention locale ne peut être définie que si la rétention sur le serveur ('Supprimer après X jours') est également configurée.</value>
+  </data>
+  <data name="AffectedAccounts" xml:space="preserve">
+    <value>Comptes affectés</value>
+  </data>
+  <data name="ApplicationStarted" xml:space="preserve">
+    <value>Application démarrée</value>
+  </data>
+  <data name="ApplyToAllAccounts" xml:space="preserve">
+    <value>Appliquer à tous les comptes de ce domaine</value>
+  </data>
+  <data name="ApplyToAllDomainAccountsPrompt" xml:space="preserve">
+    <value>Vous avez modifié les identifiants Microsoft 365. Souhaitez-vous appliquer ces modifications à tous les autres comptes du même domaine ?</value>
+  </data>
+  <data name="BackToLogin" xml:space="preserve">
+    <value>Retour à la connexion</value>
+  </data>
+  <data name="CannotLeavePasswordChange" xml:space="preserve">
+    <value>Vous devez changer votre mot de passe avant de pouvoir continuer à utiliser le système.</value>
+  </data>
+  <data name="ComplianceInformation" xml:space="preserve">
+    <value>Informations de conformité</value>
+  </data>
+  <data name="ComplianceModeActive" xml:space="preserve">
+    <value>Mode conformité ACTIF</value>
+  </data>
+  <data name="ComplianceModeDisabled" xml:space="preserve">
+    <value>Mode conformité DÉSACTIVÉ</value>
+  </data>
+  <data name="ComplianceModeStarted" xml:space="preserve">
+    <value>Mode conformité démarré</value>
+  </data>
+  <data name="ComplianceStatus" xml:space="preserve">
+    <value>Statut de conformité</value>
+  </data>
+  <data name="ConfirmResetTwoFactor" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir réinitialiser l'authentification à deux facteurs pour cet utilisateur ? Ils devront la configurer à nouveau.</value>
+  </data>
+  <data name="ContentHash" xml:space="preserve">
+    <value>Hachage de contenu (SHA-256)</value>
+  </data>
+  <data name="CopyCredentials" xml:space="preserve">
+    <value>Copier les identifiants</value>
+  </data>
+  <data name="CouldNotLoadFolders" xml:space="preserve">
+    <value>Impossible de charger les dossiers depuis le serveur</value>
+  </data>
+  <data name="CredentialChangeDetected" xml:space="preserve">
+    <value>Changement d'identifiants détecté</value>
+  </data>
+  <data name="CredentialsCopied" xml:space="preserve">
+    <value>Identifiants copiés avec succès !</value>
+  </data>
+  <data name="CurrentHash" xml:space="preserve">
+    <value>Hachage actuel</value>
+  </data>
+  <data name="EmailDeletionAllowed" xml:space="preserve">
+    <value>Suppression d'e-mail AUTORISÉE</value>
+  </data>
+  <data name="EmailDeletionPrevented" xml:space="preserve">
+    <value>Suppression d'e-mail EMPECHÉE</value>
+  </data>
+  <data name="EmailLocked" xml:space="preserve">
+    <value>Verrouillé</value>
+  </data>
+  <data name="EmailLockedDescription" xml:space="preserve">
+    <value>Cet e-mail est verrouillé et son intégrité de contenu est protégée par un hachage cryptographique</value>
+  </data>
+  <data name="ErrorCopyingCredentials" xml:space="preserve">
+    <value>Erreur lors de la copie des identifiants</value>
+  </data>
+  <data name="ErrorSavingChanges" xml:space="preserve">
+    <value>Erreur lors de l'enregistrement des modifications</value>
+  </data>
+  <data name="ExistingM365AccountsFound" xml:space="preserve">
+    <value>Comptes M365 existants trouvés</value>
+  </data>
+  <data name="HasAttachments" xml:space="preserve">
+    <value>Contient des pièces jointes</value>
+  </data>
+  <data name="HashCreated" xml:space="preserve">
+    <value>Hachage créé</value>
+  </data>
+  <data name="IntegrityCheck" xml:space="preserve">
+    <value>Vérification d'intégrité</value>
+  </data>
+  <data name="IntegrityValid" xml:space="preserve">
+    <value>Intégrité valide</value>
+  </data>
+  <data name="IntegrityValidDescription" xml:space="preserve">
+    <value>Le contenu de l'e-mail n'a pas été modifié. Le hachage actuel correspond au hachage stocké.</value>
+  </data>
+  <data name="IntegrityViolation" xml:space="preserve">
+    <value>Violation d'intégrité</value>
+  </data>
+  <data name="IntegrityViolationDescription" xml:space="preserve">
+    <value>ATTENTION : Le hachage actuel ne correspond pas au hachage stocké. Le contenu de l'e-mail a peut-être été altéré.</value>
+  </data>
+  <data name="LoadAvailableFolders" xml:space="preserve">
+    <value>Charger les dossiers disponibles</value>
+  </data>
+  <data name="LockedEmail" xml:space="preserve">
+    <value>E-mail verrouillé - contenu protégé pour conformité</value>
+  </data>
+  <data name="LoginBlocked" xml:space="preserve">
+    <value>Connexion temporairement bloquée</value>
+  </data>
+  <data name="LoginBlockedInfo" xml:space="preserve">
+    <value>Pour des raisons de sécurité, les tentatives de connexion depuis votre adresse IP ont été temporairement bloquées en raison de multiples tentatives d'authentification échouées. Veuillez attendre 10 minutes avant de réessayer.</value>
+  </data>
+  <data name="LoginBlockedMessage" xml:space="preserve">
+    <value>Trop de tentatives de connexion échouées détectées</value>
+  </data>
+  <data name="LoginBlockedTitle" xml:space="preserve">
+    <value>Accès bloqué</value>
+  </data>
+  <data name="Mismatch" xml:space="preserve">
+    <value>Incohérences</value>
+  </data>
+  <data name="NoFoldersFound" xml:space="preserve">
+    <value>Aucun dossier trouvé sur le serveur</value>
+  </data>
+  <data name="PasswordChangeRequired" xml:space="preserve">
+    <value>Changement de mot de passe requis</value>
+  </data>
+  <data name="PasswordChangeRequiredInfo" xml:space="preserve">
+    <value>Votre nouveau mot de passe doit être différent du mot de passe actuel et répondre à toutes les exigences de sécurité.</value>
+  </data>
+  <data name="PasswordChangeRequiredMessage" xml:space="preserve">
+    <value>Pour des raisons de sécurité, vous devez changer votre mot de passe avant de continuer. Cela est requis car vous utilisez les identifiants système par défaut sur un système nouvellement configuré.</value>
+  </data>
+  <data name="PasswordMinLength" xml:space="preserve">
+    <value>Le mot de passe doit comporter au moins 10 caractères</value>
+  </data>
+  <data name="PasswordMustBeDifferent" xml:space="preserve">
+    <value>Le nouveau mot de passe doit être différent du mot de passe actuel</value>
+  </data>
+  <data name="PasswordRequirements" xml:space="preserve">
+    <value>Exigences du mot de passe</value>
+  </data>
+  <data name="PasswordRequiresLowercase" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins une lettre minuscule</value>
+  </data>
+  <data name="PasswordRequiresNumber" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins un chiffre</value>
+  </data>
+  <data name="PasswordRequiresSpecialChar" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins un caractère spécial</value>
+  </data>
+  <data name="PasswordRequiresUppercase" xml:space="preserve">
+    <value>Le mot de passe doit contenir au moins une lettre majuscule</value>
+  </data>
+  <data name="PleaseSelectAccount" xml:space="preserve">
+    <value>Veuillez sélectionner un compte d'abord</value>
+  </data>
+  <data name="Provider" xml:space="preserve">
+    <value>Fournisseur</value>
+  </data>
+  <data name="ResetTwoFactor" xml:space="preserve">
+    <value>Réinitialiser l'authentification à deux facteurs</value>
+  </data>
+  <data name="SelectAccount" xml:space="preserve">
+    <value>-- Sélectionner un compte --</value>
+  </data>
+  <data name="StoredHash" xml:space="preserve">
+    <value>Hachage stocké</value>
+  </data>
+  <data name="TenantId" xml:space="preserve">
+    <value>ID de locataire</value>
+  </data>
+  <data name="TwoFactorEnabled" xml:space="preserve">
+    <value>L'authentification à deux facteurs est actuellement activée pour cet utilisateur.</value>
+  </data>
+  <data name="UseExistingCredentialsPrompt" xml:space="preserve">
+    <value>D'autres comptes Microsoft 365 de ce domaine existent déjà. Vous pouvez copier leurs identifiants pour gagner du temps.</value>
+  </data>
+  <data name="OidcAccountAlreadyExists" xml:space="preserve">
+    <value>Un compte avec cette adresse e-mail existe déjà. Veuillez contacter votre administrateur pour supprimer ou modifier le compte local existant avant d'utiliser l'authentification OIDC.</value>
+  </data>
+  <data name="OidcAccountDeactivated" xml:space="preserve">
+    <value>Votre compte a été désactivé. Veuillez contacter un administrateur.</value>
+  </data>
+  <data name="OidcAccountPendingApproval" xml:space="preserve">
+    <value>Votre compte est en attente d'approbation par l'administrateur. Veuillez contacter un administrateur.</value>
+  </data>
+  <data name="OidcClaimLengthExceeded" xml:space="preserve">
+    <value>Les valeurs de la revendication dépassent la longueur maximale autorisée</value>
+  </data>
+  <data name="OidcInvalidEmailFormat" xml:space="preserve">
+    <value>Format d'e-mail invalide reçu du fournisseur d'identité</value>
+  </data>
+  <data name="OidcUserCannotChangePassword" xml:space="preserve">
+    <value>Les utilisateurs OIDC ne peuvent pas changer leur mot de passe. La gestion des mots de passe est gérée par votre fournisseur OIDC.</value>
+  </data>
+  <data name="OidcUserCannotChangeUsername" xml:space="preserve">
+    <value>Les noms d'utilisateur OIDC ne peuvent pas être modifiés car ils sont liés à l'identité du fournisseur OIDC.</value>
+  </data>
+  <data name="OidcUserCannotHavePassword" xml:space="preserve">
+    <value>Les utilisateurs OIDC ne peuvent pas avoir de mot de passe. Ils s'authentifient via le fournisseur OIDC.</value>
+  </data>
+  <data name="SignInWithOAuth" xml:space="preserve">
+    <value>Se connecter avec OAuth</value>
+  </data>
+  <data name="SignInWithOAuthProvider" xml:space="preserve">
+    <value>Se connecter avec {0}</value>
+  </data>
+  <data name="RedirectingToProvider" xml:space="preserve">
+    <value>Redirection vers {0}...</value>
+  </data>
+  <data name="PleaseWaitRedirectingToProvider" xml:space="preserve">
+    <value>Veuillez patienter pendant que nous vous redirigeons vers {0}...</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Chargement...</value>
+  </data>
+  <data name="CurrentSyncTime" xml:space="preserve">
+    <value>Heure de synchronisation actuelle</value>
+  </data>
+  <data name="EditSyncTime" xml:space="preserve">
+    <value>Modifier l'heure de synchronisation</value>
+  </data>
+  <data name="EditSyncTimeForAccount" xml:space="preserve">
+    <value>Modifier l'heure de synchronisation pour le compte: {0}</value>
+  </data>
+  <data name="EditSyncTimeNote" xml:space="preserve">
+    <value>Note: Cela définit l'heure de synchronisation à la date et à l'heure spécifiées. Le système ne synchronisera que les e-mails plus récents que cet horodatage. Utilisez cette fonctionnalité lorsque vous devez ajuster manuellement le point de synchronisation, par exemple après des échecs de synchronisation partielle.</value>
+  </data>
+  <data name="EditSyncTimeTitle" xml:space="preserve">
+    <value>Modifier l'heure de synchronisation</value>
+  </data>
+  <data name="NewSyncTime" xml:space="preserve">
+    <value>Nouvelle heure de synchronisation</value>
+  </data>
+  <data name="SyncTimeUpdatedSuccess" xml:space="preserve">
+    <value>L'heure de synchronisation a été mise à jour avec succès. Le système synchronisera désormais les e-mails en fonction du nouvel horodatage.</value>
+  </data>
+  <data name="AccountDeleted" xml:space="preserve">
+    <value>Le compte '{0}' a été supprimé avec succès avec tous les emails archivés et les pièces jointes.</value>
+  </data>
+  <data name="AccountDeletionQueued" xml:space="preserve">
+    <value>La suppression du compte '{0}' a été mise en file d'attente et sera traitée en arrière-plan.</value>
+  </data>
+  <data name="AccountDeletionStatus" xml:space="preserve">
+    <value>Statut de suppression de compte</value>
+  </data>
+  <data name="AttachmentDeletionProgress" xml:space="preserve">
+    <value>Progression de suppression des pièces jointes</value>
+  </data>
+  <data name="AttachmentProgress" xml:space="preserve">
+    <value>Progression des pièces jointes</value>
+  </data>
+  <data name="BackToJobs" xml:space="preserve">
+    <value>Retour aux tâches</value>
+  </data>
+  <data name="CancelDeletion" xml:space="preserve">
+    <value>Annuler la suppression</value>
+  </data>
+  <data name="CancelDeletionConfirm" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir annuler cette tâche de suppression ? Si la suppression a déjà commencé, certaines données peuvent déjà avoir été supprimées.</value>
+  </data>
+  <data name="ConfirmCancelEmailDeletion" xml:space="preserve">
+    <value>Êtes-vous sûr de vouloir annuler cette tâche de suppression d'emails ?</value>
+  </data>
+  <data name="CurrentPhase" xml:space="preserve">
+    <value>Phase actuelle</value>
+  </data>
+  <data name="DatabaseMaintenance" xml:space="preserve">
+    <value>Maintenance de la base de données</value>
+  </data>
+  <data name="DeletedAttachments" xml:space="preserve">
+    <value>Pièces jointes supprimées</value>
+  </data>
+  <data name="DeletedEmails" xml:space="preserve">
+    <value>Emails supprimés</value>
+  </data>
+  <data name="DeletionCancelError" xml:space="preserve">
+    <value>Impossible d'annuler la tâche de suppression. La tâche peut déjà être terminée ou n'exister pas.</value>
+  </data>
+  <data name="DeletionCancelled" xml:space="preserve">
+    <value>La tâche de suppression a été annulée.</value>
+  </data>
+  <data name="DeletionCompletedSuccessfully" xml:space="preserve">
+    <value>Suppression terminée avec succès</value>
+  </data>
+  <data name="DeletionJobNotFound" xml:space="preserve">
+    <value>Tâche de suppression introuvable.</value>
+  </data>
+  <data name="DeletionProgress" xml:space="preserve">
+    <value>Progression de suppression</value>
+  </data>
+  <data name="DeletionStatus" xml:space="preserve">
+    <value>Statut de suppression</value>
+  </data>
+  <data name="EmailDeletionJobs" xml:space="preserve">
+    <value>Tâches de suppression d'emails</value>
+  </data>
+  <data name="AccountDeletionJobs" xml:space="preserve">
+    <value>Suppressions de comptes</value>
+  </data>
+  <data name="EmailDeletionProgress" xml:space="preserve">
+    <value>Progression de suppression d'emails</value>
+  </data>
+  <data name="EmailDeletionStatus" xml:space="preserve">
+    <value>Statut de suppression d'emails</value>
+  </data>
+  <data name="EmailProgress" xml:space="preserve">
+    <value>Progression des emails</value>
+  </data>
+  <data name="InvalidDeletionJobID" xml:space="preserve">
+    <value>ID de tâche de suppression invalide.</value>
+  </data>
+  <data name="JobDetails" xml:space="preserve">
+    <value>Détails de la tâche</value>
+  </data>
+  <data name="TotalAttachments" xml:space="preserve">
+    <value>Pièces jointes totales</value>
+  </data>
+  <data name="ShowHtml" xml:space="preserve">
+    <value>Afficher le HTML</value>
+  </data>
+  <data name="ShowPlainText" xml:space="preserve">
+    <value>Afficher le texte brut</value>
+  </data>
+  <data name="SwitchToHtml" xml:space="preserve">
+    <value>Passer à la vue HTML</value>
+  </data>
+  <data name="SwitchToPlainText" xml:space="preserve">
+    <value>Passer à la vue texte brut</value>
+  </data>
+  <data name="EnterFolderName" xml:space="preserve">
+    <value>Entrez le nom du dossier</value>
+  </data>
+  <data name="EnterFolderNameOrSelect" xml:space="preserve">
+    <value>Entrez un nouveau nom de dossier ou sélectionnez un dossier existant. Le dossier sera créé automatiquement lors de l'importation.</value>
+  </data>
+  <data name="ManualSyncTooltip" xml:space="preserve">
+    <value>Synchronisation manuelle - le compte est désactivé pour la synchronisation automatique</value>
+  </data>
+  <data name="CompletedWithErrors" xml:space="preserve">
+    <value>Terminé avec des erreurs</value>
+  </data>
+  <data name="ImportCompletedWithErrorsTitle" xml:space="preserve">
+    <value>Importation terminée avec des erreurs</value>
+  </data>
+  <data name="ImportCompletedWithErrorsDescription" xml:space="preserve">
+    <value>L'importation est terminée, mais certains e-mails n'ont pas pu être traités. Les e-mails importés avec succès sont disponibles dans votre archive. Les e-mails mal formés ont été ignorés. Consultez les journaux pour obtenir des détails sur les e-mails affectés.</value>
+  </data>
+  <data name="MalformedSkippedLabel" xml:space="preserve">
+    <value>Mauvaise forme (ignorés):</value>
+  </data>
+  <data name="DetailsLabel" xml:space="preserve">
+    <value>Détails</value>
+  </data>
+  <data name="RateLimited" xml:space="preserve">
+    <value>Limite de débit atteint</value>
+  </data>
+  <data name="TimedOut" xml:space="preserve">
+    <value>Délai dépassé</value>
+  </data>
+  <data name="LastRunTitle" xml:space="preserve">
+    <value>Dernière synchronisation</value>
+  </data>
+  <data name="LastRunNone" xml:space="preserve">
+    <value>Aucune exécution terminée depuis le démarrage de l'application.</value>
+  </data>
+  <data name="LastRunSyncInProgress" xml:space="preserve">
+    <value>Une synchronisation est en cours.</value>
+  </data>
+  <data name="LastRunSummary" xml:space="preserve">
+    <value>Terminé {0}, durée {1}, messages traités : {2}, nouveaux : {3}.</value>
+  </data>
+  <data name="LastRunHeldBack" xml:space="preserve">
+    <value>L'horodatage de la dernière synchronisation n'a pas avancé ; la prochaine exécution couvrira la même période.</value>
+  </data>
+  <data name="LastRunFailuresAcknowledged" xml:space="preserve">
+    <value>Les échecs de cette exécution ont été reconnus ; l'horodatage de la dernière synchronisation a donc avancé.</value>
+  </data>
+  <data name="LastRunResumes" xml:space="preserve">
+    <value>L'exécution a été mise en pause, pas terminée. La suivante reprendra là où celle-ci s'est arrêtée.</value>
+  </data>
+  <data name="IssueKindFolderFailed" xml:space="preserve">
+    <value>Dossiers illisibles</value>
+  </data>
+  <data name="IssueKindFolderMissing" xml:space="preserve">
+    <value>Dossiers absents du serveur</value>
+  </data>
+  <data name="IssueKindFolderMissingHint" xml:space="preserve">
+    <value>Il s'agit généralement d'abonnements résiduels à des dossiers supprimés. Sans danger, mais à nettoyer dans votre logiciel de messagerie.</value>
+  </data>
+  <data name="IssueKindMessageFailed" xml:space="preserve">
+    <value>Messages non archivés</value>
+  </data>
+  <data name="IssueNoDetails" xml:space="preserve">
+    <value>Aucun détail enregistré.</value>
+  </data>
+  <data name="IssueAndMore" xml:space="preserve">
+    <value>et {0} de plus</value>
+  </data>
+  <data name="LastRunHadIssuesHint" xml:space="preserve">
+    <value>La dernière exécution a signalé des problèmes</value>
+  </data>
+  <data name="SyncProgressTooltip" xml:space="preserve">
+    <value>La progression est mesurée par dossiers terminés. Un grand dossier (ex. INBOX) maintient la barre à 0% jusqu'à ce qu'il se termine.</value>
+  </data>
+  <data name="SyncStatusTooltip" xml:space="preserve">
+    <value>Codes d'état :&lt;br&gt;Running = synchronisation en cours&lt;br&gt;Completed = terminé avec succès&lt;br&gt;Failed = terminé avec des erreurs&lt;br&gt;Cancelled = arrêté par l'utilisateur&lt;br&gt;Rate Limited = suspendu en raison du quota de bande passante</value>
+  </data>
+  <data name="SyncJobRateLimited" xml:space="preserve">
+    <value>Synchronisation suspendue en raison de la limite de bande passante. Reprendra automatiquement.</value>
+  </data> 
+  <data name="ToggleFolderTree" xml:space="preserve">
+    <value>Cliquer pour développer/réduire l'arborescence des dossiers</value>
+  </data>
+  <data name="ExpandAllFolders" xml:space="preserve">
+    <value>Développer tous les dossiers</value>
+  </data>
+  <data name="CollapseAllFolders" xml:space="preserve">
+    <value>Réduire tous les dossiers</value>
+  </data>
+  <data name="NoFolders" xml:space="preserve">
+    <value>Aucun dossier disponible</value>
+  </data>
+  <data name="PreserveFolderStructure" xml:space="preserve">
+    <value>Conserver la structure des dossiers</value>
+  </data>
+  <data name="PreserveFolderStructureHelp" xml:space="preserve">
+    <value>Restaure les e-mails dans des sous-dossiers correspondant à leur structure de dossiers d’origine sous le dossier cible sélectionné.</value>
+  </data>
+  <data name="SkippedLabel" xml:space="preserve">
+    <value>Ignoré (doublons) :</value>
+  </data>
+  <data name="DuplicatesSkippedTitle" xml:space="preserve">
+    <value>Adresses e-mail en double ignorées</value>
+  </data>
+  <data name="DuplicatesSkippedSummary" xml:space="preserve">
+    <value>{0} e-mails ont été ignorés car ils existent déjà dans le compte cible.</value>
+  </data>
+  <data name="SyncCancel" xml:space="preserve">
+    <value>Synchronisation annulée</value>
+  </data>
+  <data name="DeletionPolicy" xml:space="preserve">
+    <value>Politique de suppression</value>
+  </data>
+  <data name="SyncAcknowledgeFailures" xml:space="preserve">
+    <value>Échecs de synchronisation confirmés</value>
+  </data>
+  <data name="Retention" xml:space="preserve">
+    <value>Rétention</value>
+  </data>
+  <data name="DeletionDisabledMessage" xml:space="preserve">
+    <value>La suppression des e-mails est désactivée par configuration.</value>
+  </data>
+  <data name="ConfirmBatchDelete" xml:space="preserve">
+    <value>Confirmer la suppression par lot</value>
+  </data>
+  <data name="FailedEmailSingular" xml:space="preserve">
+    <value>L'e-mail n'a pas pu être traité</value>
+  </data>
+  <data name="FailedEmailsPlural" xml:space="preserve">
+    <value>Les e-mails n'ont pas pu être traités</value>
+  </data>
+  <data name="EmailId" xml:space="preserve">
+    <value>ID e-mail</value>
+  </data>
+  <data name="NewFeatures" xml:space="preserve">
+    <value>Nouvelles fonctionnalités</value>
+  </data>
+  <data name="AllReleases" xml:space="preserve">
+    <value>Toutes les versions</value>
+  </data>
+  <data name="GotIt" xml:space="preserve">
+    <value>Compris !</value>
+  </data>
+
+  <!-- MSA (personal Microsoft account) OAuth2 device code flow -->
+  <data name="MsaAuthorizeTitle" xml:space="preserve">
+    <value>Autoriser le compte Microsoft</value>
+  </data>
+  <data name="MsaAccountLabel" xml:space="preserve">
+    <value>Compte :</value>
+  </data>
+  <data name="MsaStep1OpenBrowser" xml:space="preserve">
+    <value>1. Ouvrez dans un navigateur (ou smartphone, etc.) :</value>
+  </data>
+  <data name="MsaStep2EnterCode" xml:space="preserve">
+    <value>2. Saisissez ce code :</value>
+  </data>
+  <data name="MsaCopyCode" xml:space="preserve">
+    <value>Copier</value>
+  </data>
+  <data name="MsaCopyCodeTooltip" xml:space="preserve">
+    <value>Copier le code</value>
+  </data>
+  <data name="MsaCodeValidFor" xml:space="preserve">
+    <value>Code valable {0} minutes.</value>
+  </data>
+  <data name="MsaWaitingForAuthorization" xml:space="preserve">
+    <value>En attente d'autorisation …</value>
+  </data>
+  <data name="MsaAuthorizationSuccessful" xml:space="preserve">
+    <value>Autorisation réussie ! Redirection …</value>
+  </data>
+  <data name="MsaErrorPrefix" xml:space="preserve">
+    <value>Erreur :</value>
+  </data>
+  <data name="MsaRetry" xml:space="preserve">
+    <value>Réessayer</value>
+  </data>
+  <data name="MsaProviderLabel" xml:space="preserve">
+    <value>Microsoft Personnel</value>
+  </data>
+  <data name="MsaSettingsHeading" xml:space="preserve">
+    <value>Compte personnel Microsoft (Outlook.com / M365 Family)</value>
+  </data>
+  <data name="MsaNoAppRegistrationNeeded" xml:space="preserve">
+    <value>Aucune inscription d'application requise.</value>
+  </data>
+  <data name="MsaDefaultClientInfoCreate" xml:space="preserve">
+    <value>Mail-Archiver utilise une inscription d'application préconfigurée. Saisissez l'adresse e-mail, enregistrez, puis cliquez sur {0}.</value>
+  </data>
+  <data name="MsaAuthorize" xml:space="preserve">
+    <value>Autoriser</value>
+  </data>
+  <data name="MsaAppRegistrationSetup" xml:space="preserve">
+    <value>Configurer l'inscription d'application Azure (une fois, ~2 minutes)</value>
+  </data>
+  <data name="MsaCreateAppRegistration" xml:space="preserve">
+    <value>Créer une inscription d'application</value>
+  </data>
+  <data name="MsaSignInWithMicrosoftAccount" xml:space="preserve">
+    <value>(connectez-vous avec votre compte Microsoft)</value>
+  </data>
+  <data name="MsaAppRegStepName" xml:space="preserve">
+    <value>Choisissez un nom quelconque (p. ex. mail-archiver)</value>
+  </data>
+  <data name="MsaAppRegStepAccountTypes" xml:space="preserve">
+    <value>Sous Types de comptes pris en charge sélectionner : Comptes dans n'importe quel annuaire organisationnel et comptes Microsoft personnelles</value>
+  </data>
+  <data name="MsaAppRegStepRedirect" xml:space="preserve">
+    <value>Laisser l'URI de redirection vide → cliquer sur Inscrire</value>
+  </data>
+  <data name="MsaAppRegStepClientId" xml:space="preserve">
+    <value>Saisissez ci-dessous l'ID d'application (client) affiché</value>
+  </data>
+  <data name="MsaAppRegStepAuth" xml:space="preserve">
+    <value>Cliquer sur Authentification dans l'app → activer Autoriser les flux de client public → Enregistrer</value>
+  </data>
+  <data name="MsaNoSecretNeededCreate" xml:space="preserve">
+    <value>Aucun secret ni URI de redirection requis. Après enregistrement, cliquer sur Autoriser.</value>
+  </data>
+  <data name="MsaClientIdPlaceholder" xml:space="preserve">
+    <value>ID d'application (client) Azure</value>
+  </data>
+  <data name="MsaClientSecretOptional" xml:space="preserve">
+    <value>(facultatif)</value>
+  </data>
+  <data name="MsaClientSecretPlaceholder" xml:space="preserve">
+    <value>Non requis pour les applications client public</value>
+  </data>
+  <data name="MsaClientSecretHint" xml:space="preserve">
+    <value>Nécessaire uniquement pour les applications client confidentielles. Laisser vide lors de l'utilisation d'un client public.</value>
+  </data>
+  <data name="MsaAuthorized" xml:space="preserve">
+    <value>Autorisé. Compte Microsoft connecté, le jeton est renouvelé automatiquement.</value>
+  </data>
+  <data name="MsaReAuthorize" xml:space="preserve">
+    <value>Réautoriser</value>
+  </data>
+  <data name="MsaNotYetAuthorized" xml:space="preserve">
+    <value>Pas encore autorisé.</value>
+  </data>
+  <data name="MsaSaveThenAuthorize" xml:space="preserve">
+    <value>Enregistrez, puis cliquez sur {0}.</value>
+  </data>
+  <data name="MsaEnterClientIdThenAuthorize" xml:space="preserve">
+    <value>Saisissez l'ID client, enregistrez, puis cliquez sur {0}.</value>
+  </data>
+  <data name="MsaDefaultClientInfoEdit" xml:space="preserve">
+    <value>Mail-Archiver utilise une inscription d'application préconfigurée — aucune inscription propre requise. Remplir uniquement pour utiliser un ID client personnalisé.</value>
+  </data>
+  <data name="MsaNoSecretNeededShort" xml:space="preserve">
+    <value>Aucun secret ni URI de redirection requis.</value>
+  </data>
+  <data name="MsaClientIdOptionalHint" xml:space="preserve">
+    <value>Facultatif — laisser vide pour utiliser l'inscription d'application par défaut.</value>
+  </data>
+  <data name="MsaClientIdKeepExisting" xml:space="preserve">
+    <value>Laisser vide pour conserver la valeur existante.</value>
+  </data>
+  <data name="MsaClientSecretPlaceholderEdit" xml:space="preserve">
+    <value>Non requis pour le flux de code d'appareil</value>
+  </data>
+  <data name="MsaAuthorizeWithMicrosoft" xml:space="preserve">
+    <value>Autoriser avec Microsoft</value>
+  </data>
+  <data name="MsaReAuthorizeWithMicrosoft" xml:space="preserve">
+    <value>Réautoriser avec Microsoft</value>
+  </data>
+  <data name="MsaClientIdRequired" xml:space="preserve">
+    <value>Un ID client est requis pour les comptes MS Personnel lorsqu'aucun ID client par défaut n'est configuré.</value>
+  </data>
+  <data name="MsaNotAuthorizedSync" xml:space="preserve">
+    <value>Ce compte Microsoft n'est pas encore autorisé. Veuillez d'abord cliquer sur « Autoriser avec Microsoft » sur la page de modification du compte.</value>
+  </data>
+  <data name="MsaClientIdNotConfigured" xml:space="preserve">
+    <value>L'ID client n'est pas configuré. Veuillez d'abord modifier le compte.</value>
+  </data>
+  <data name="MsaAuthorizationFailed" xml:space="preserve">
+    <value>Échec du démarrage de l'autorisation : {0}</value>
+  </data>
+  <data name="MsaAccessDenied" xml:space="preserve">
+    <value>Accès refusé.</value>
+  </data>
+  <data name="MsaSessionExpired" xml:space="preserve">
+    <value>Session expirée. Veuillez relancer l'autorisation.</value>
+  </data>
+  <data name="MsaAccountNotFound" xml:space="preserve">
+    <value>Compte introuvable.</value>
+  </data>
+  <data name="MsaAuthorizationCancelled" xml:space="preserve">
+    <value>Création du compte annulée.</value>
+  </data>
+  <data name="UseTenantImport" xml:space="preserve">
+    <value>Utiliser l'importation du locataire</value>
+  </data>
+  <data name="UseTenantImportHelp" xml:space="preserve">
+    <value>Charge les boîtes aux lettres du locataire et crée des comptes selon le schéma de nom : nom saisi - &lt;boite@exemple.com&gt;.</value>
+  </data>
+  <data name="SkipDisabledMailboxes" xml:space="preserve">
+    <value>Ignorer les boîtes aux lettres désactivées</value>
+  </data>
+  <data name="ImportAllListedMailboxes" xml:space="preserve">
+    <value>Importer toutes les boîtes aux lettres répertoriées</value>
+  </data>
+  <data name="ImportAllListedMailboxesHelp" xml:space="preserve">
+    <value>Lorsqu'il est désactivé, seules les boîtes aux lettres sélectionnées ci-dessous sont importées.</value>
+  </data>
+  <data name="LoadMailboxes" xml:space="preserve">
+    <value>Charger les boîtes aux lettres</value>
+  </data>
+  <data name="TenantMailboxes" xml:space="preserve">
+    <value>Boîtes aux lettres du locataire</value>
+  </data>
+  <data name="ClearSelection" xml:space="preserve">
+    <value>Effacer la sélection</value>
+  </data>
+  <data name="NoMailboxesFound" xml:space="preserve">
+    <value>Aucune boîte aux lettres trouvée.</value>
+  </data>
+  <data name="DisabledLowercase" xml:space="preserve">
+    <value>désactivé</value>
+  </data>
+  <data name="AlreadyExistsLowercase" xml:space="preserve">
+    <value>existe déjà</value>
+  </data>
+  <data name="LoadingMailboxes" xml:space="preserve">
+    <value>Chargement des boîtes aux lettres...</value>
+  </data>
+  <data name="MailboxesCouldNotBeLoaded" xml:space="preserve">
+    <value>Les boîtes aux lettres n'ont pas pu être chargées.</value>
+  </data>
+  <data name="MailboxesFound" xml:space="preserve">
+    <value>{0} boîte(s) aux lettres trouvée(s).</value>
+  </data>
+  <data name="M365MailboxDefaultName" xml:space="preserve">
+    <value>Boîte aux lettres M365</value>
+  </data>
+  <data name="NoEnabledM365UsersFound" xml:space="preserve">
+    <value>Aucun utilisateur M365 activé avec une adresse e-mail ou un nom principal d'utilisateur n'a été trouvé dans ce locataire.</value>
+  </data>
+  <data name="SelectAtLeastOneMailboxOrImportAll" xml:space="preserve">
+    <value>Sélectionnez au moins une boîte aux lettres ou activez l'importation de toutes les boîtes aux lettres répertoriées.</value>
+  </data>
+  <data name="AllSelectedM365TenantMailboxesAlreadyExist" xml:space="preserve">
+    <value>Toutes les {0} boîtes aux lettres du locataire M365 sélectionnées existent déjà.</value>
+  </data>
+  <data name="ImportedM365TenantAccounts" xml:space="preserve">
+    <value>{0} comptes de messagerie du locataire M365 importés. {1} comptes existants ignorés.</value>
+  </data>
+  <data name="M365TenantCredentialsRequired" xml:space="preserve">
+    <value>L'ID client, le secret client et l'ID du locataire sont requis pour répertorier les boîtes aux lettres du locataire.</value>
+  </data>
+  <data name="M365TenantMailboxesCouldNotBeListed" xml:space="preserve">
+    <value>Les boîtes aux lettres du locataire n'ont pas pu être répertoriées. Veuillez vérifier les identifiants et les autorisations M365.</value>
+  </data>
+  <data name="M365TenantAccountsCouldNotBeImported" xml:space="preserve">
+    <value>Les comptes du locataire M365 n'ont pas pu être importés. Veuillez vérifier les identifiants et les autorisations.</value>
+  </data>
+  <data name="NameRequired" xml:space="preserve">
+    <value>Le nom est requis</value>
+  </data>
+  <data name="EmailAddressRequired" xml:space="preserve">
+    <value>L'adresse e-mail est requise</value>
+  </data>
+  <data name="ProviderM365Single" xml:space="preserve">
+    <value>Microsoft 365 (boîte aux lettres unique)</value>
+  </data>
+  <data name="ProviderM365Tenant" xml:space="preserve">
+    <value>Microsoft 365 (locataire)</value>
+  </data>
+  <data name="LoadMailboxesHelp" xml:space="preserve">
+    <value>Chargez la liste des boîtes aux lettres du locataire pour choisir quels comptes importer.</value>
+  </data>
+  <data name="InvalidImportFileType" xml:space="preserve">
+    <value>Type de fichier invalide. Extensions autorisées : .mbox, .eml, .zip</value>
+  </data>
+  <data name="ClientSecretWillBeCopiedOnSave" xml:space="preserve">
+    <value>Le secret client sera copié depuis le compte existant sélectionné lors de l'enregistrement.</value>
+  </data>
+  <data name="ClientSecretRequired" xml:space="preserve">
+    <value>Le secret client est requis pour les comptes M365</value>
+  </data>
+  <data name="TenantManagement" xml:space="preserve">
+    <value>Gestion du locataire</value>
+  </data>
+  <data name="TenantManagementTitle" xml:space="preserve">
+    <value>Gestion du locataire</value>
+  </data>
+  <data name="TenantManagementHelp" xml:space="preserve">
+    <value>Ajoutez les boîtes aux lettres manquantes de ce locataire. Les nouveaux comptes utilisent les identifiants du compte source.</value>
+  </data>
+  <data name="AddSelectedMailboxes" xml:space="preserve">
+    <value>Ajouter les boîtes aux lettres sélectionnées</value>
+  </data>
+  <data name="MailboxesAdded" xml:space="preserve">
+    <value>{0} boîte(s) aux lettres ajoutée(s).</value>
+  </data>
+  <data name="NoNewMailboxesToAdd" xml:space="preserve">
+    <value>Aucune nouvelle boîte aux lettres à ajouter.</value>
+  </data>
+  <data name="SelectAtLeastOneMailboxForManagement" xml:space="preserve">
+    <value>Sélectionnez au moins une boîte aux lettres à ajouter.</value>
+  </data>
+  <data name="MoreActions" xml:space="preserve">
+    <value>Plus d'actions</value>
+  </data>
+  <data name="AccountNameTooLong" xml:space="preserve">
+    <value>Le nom du compte doit comporter au plus 200 caractères.</value>
+  </data>
+  <data name="SelectAtMostMailboxes" xml:space="preserve">
+    <value>Sélectionnez au maximum {0} boîtes aux lettres à la fois.</value>
+  </data>
+  <data name="SearchMailboxes" xml:space="preserve">
+    <value>Rechercher des boîtes aux lettres...</value>
+  </data>
+  <data name="NoMailboxesMatch" xml:space="preserve">
+    <value>Aucune boîte aux lettres ne correspond à votre recherche.</value>
+  </data>
+  <data name="SearchAccounts" xml:space="preserve">
+    <value>Rechercher des comptes...</value>
+  </data>
+  <data name="NoAccountsMatch" xml:space="preserve">
+    <value>Aucun compte ne correspond à votre recherche.</value>
+  </data>
+  <data name="SearchUsers" xml:space="preserve">
+    <value>Rechercher des utilisateurs...</value>
+  </data>
+  <data name="NoUsersMatch" xml:space="preserve">
+    <value>Aucun utilisateur ne correspond à votre recherche.</value>
+  </data>
+  <data name="AccountsFound" xml:space="preserve">
+    <value>{0} comptes trouvés</value>
+  </data>
+  <data name="UsersFound" xml:space="preserve">
+    <value>{0} utilisateurs trouvés</value>
+  </data>
+  <data name="RenameExistingAccounts" xml:space="preserve">
+    <value>Renommer les comptes existants</value>
+  </data>
+  <data name="RenameExistingAccountsHelp" xml:space="preserve">
+    <value>Applique le schéma de nommage à tous les comptes M365 utilisant la même inscription d'application après l'enregistrement.</value>
+  </data>
+  <data name="AccountsRenamed" xml:space="preserve">
+    <value>{0} compte(s) renommé(s).</value>
+  </data>
+  <data name="MailboxesAddedAndAccountsRenamed" xml:space="preserve">
+    <value>{0} boîte(s) aux lettres ajoutée(s) et {1} compte(s) renommé(s).</value>
+  </data>
+  <data name="ShowPassword" xml:space="preserve">
+    <value>Afficher le mot de passe</value>
+  </data>
+  <data name="HidePassword" xml:space="preserve">
+    <value>Masquer le mot de passe</value>
+  </data>
+  <data name="AdvancedSettings" xml:space="preserve">
+    <value>Paramètres avancés</value>
+  </data>
+  <data name="UnsavedChangesWarning" xml:space="preserve">
+    <value>Vous avez des modifications non enregistrées. Êtes-vous sûr de vouloir quitter cette page ?</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Enregistrement...</value>
+  </data>
+  <data name="CopyFolderToExcluded" xml:space="preserve">
+    <value>Cliquez sur un dossier pour l'ajouter ou le retirer de la liste d'exclusion</value>
+  </data>
+  <data name="StorageUsed" xml:space="preserve">
+    <value>Stockage utilisé</value>
+  </data>
+  <data name="ConnectionDetails" xml:space="preserve">
+    <value>Détails de connexion</value>
+  </data>
+  <data name="PrimaryActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="FilterMailboxes" xml:space="preserve">
+    <value>Filtrer les boîtes aux lettres...</value>
+  </data>
+  <data name="NoMailboxesMatchFilter" xml:space="preserve">
+    <value>Aucune boîte aux lettres ne correspond à votre filtre.</value>
+  </data>
+  <data name="MsaBadge" xml:space="preserve">
+    <value>MSA (personnel)</value>
+  </data>
+  <data name="MsaAuthAfterSaveInfo" xml:space="preserve">
+    <value>Après l'enregistrement, vous serez redirigé vers Microsoft pour autoriser l'accès à votre boîte aux lettres.</value>
+  </data>
+  <data name="UserAccountSection" xml:space="preserve">
+    <value>Détails du compte</value>
+  </data>
+  <data name="UserSecuritySection" xml:space="preserve">
+    <value>Sécurité</value>
+  </data>
+  <data name="OidcPasswordManagedExternally" xml:space="preserve">
+    <value>Cet utilisateur est OIDC. La gestion du mot de passe est gérée par le fournisseur OIDC.</value>
+  </data>
+  <data name="BackgroundJobsActiveCount" xml:space="preserve">
+    <value>{0} tâche(s) en arrière-plan en cours d'exécution.</value>
+  </data>
+  <data name="AutoRefreshInfo" xml:space="preserve">
+    <value>Actualisation automatique dans {0}s</value>
+  </data>
+  <data name="WelcomeBack" xml:space="preserve">
+    <value>Bon retour, {0}</value>
+  </data>
+  <!-- CSV Bulk IMAP Import -->
+  <data name="ImportCsvBulk" xml:space="preserve">
+    <value>Import CSV en masse</value>
+  </data>
+  <data name="CsvImportTitle" xml:space="preserve">
+    <value>Importer des boîtes IMAP depuis un CSV</value>
+  </data>
+  <data name="CsvImportInformation" xml:space="preserve">
+    <value>Importez plusieurs boîtes IMAP à la fois via un fichier CSV.</value>
+  </data>
+  <data name="CsvImportFormatHelp" xml:space="preserve">
+    <value>Colonnes : email (obligatoire), password (obligatoire), name (optionnel), username (optionnel), imap_server (optionnel), imap_port (optionnel), use_ssl (optionnel)</value>
+  </data>
+  <data name="CsvImportCommonServerHelp" xml:space="preserve">
+    <value>Les paramètres de serveur communs s'appliquent à toutes les lignes sans colonne imap_server.</value>
+  </data>
+  <data name="CsvImportNoConnectionTest" xml:space="preserve">
+    <value>Aucun test de connexion IMAP n'est effectué — les erreurs apparaîtront uniquement lors de la première synchronisation.</value>
+  </data>
+  <data name="CsvImportAdminOnlyNote" xml:space="preserve">
+    <value>Cette fonctionnalité est réservée aux administrateurs.</value>
+  </data>
+  <data name="DownloadExampleCsv" xml:space="preserve">
+    <value>Télécharger un exemple CSV</value>
+  </data>
+  <data name="CsvImportSettingsTitle" xml:space="preserve">
+    <value>Importation et paramètres</value>
+  </data>
+  <data name="CsvFile" xml:space="preserve">
+    <value>Fichier CSV</value>
+  </data>
+  <data name="CsvFileHelp" xml:space="preserve">
+    <value>Fichier CSV encodé en UTF-8 avec ligne d'en-tête. Colonnes obligatoires : email, password.</value>
+  </data>
+  <data name="CommonServerSettings" xml:space="preserve">
+    <value>Paramètres de serveur communs</value>
+  </data>
+  <data name="CommonServerSettingsHelp" xml:space="preserve">
+    <value>Utilisés lorsque la ligne CSV n'a pas de valeur imap_server.</value>
+  </data>
+  <data name="ImapServerLabel" xml:space="preserve">
+    <value>Serveur IMAP</value>
+  </data>
+  <data name="ImapPortLabel" xml:space="preserve">
+    <value>Port IMAP</value>
+  </data>
+  <data name="UseSslLabel" xml:space="preserve">
+    <value>Utiliser SSL</value>
+  </data>
+  <data name="NamePrefix" xml:space="preserve">
+    <value>Préfixe de nom</value>
+  </data>
+  <data name="NamePrefixHelp" xml:space="preserve">
+    <value>Nom par défaut : "{prefix} - &lt;{email}&gt;"</value>
+  </data>
+  <data name="SkipExisting" xml:space="preserve">
+    <value>Ignorer les boîtes existantes</value>
+  </data>
+  <data name="SkipExistingHelp" xml:space="preserve">
+    <value>Les doublons sont ignorés, non marqués comme erreurs.</value>
+  </data>
+  <data name="AccountEnabledLabel" xml:space="preserve">
+    <value>Compte activé</value>
+  </data>
+  <data name="CsvImportSubmit" xml:space="preserve">
+    <value>Importer</value>
+  </data>
+  <data name="CsvImportResult" xml:space="preserve">
+    <value>Résultat de l'import</value>
+  </data>
+  <data name="CsvImportAgain" xml:space="preserve">
+    <value>Importer un autre CSV</value>
+  </data>
+  <data name="CsvImportResultSummary" xml:space="preserve">
+    <value>{0} créés, {1} ignorés, {2} échoués</value>
+  </data>
+  <data name="CsvImportCreated" xml:space="preserve">
+    <value>Créés</value>
+  </data>
+  <data name="CsvImportSkipped" xml:space="preserve">
+    <value>Ignorés</value>
+  </data>
+  <data name="CsvImportFailed" xml:space="preserve">
+    <value>Échoués</value>
+  </data>
+  <data name="CsvImportEmail" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="CsvImportNameCol" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="CsvImportReason" xml:space="preserve">
+    <value>Raison</value>
+  </data>
+  <data name="CsvImportRowNumber" xml:space="preserve">
+    <value>Ligne</value>
+  </data>
+  <data name="CsvImportNoFile" xml:space="preserve">
+    <value>Veuillez sélectionner un fichier CSV.</value>
+  </data>
+  <data name="CsvImportFileTooLarge" xml:space="preserve">
+    <value>Fichier trop volumineux : {0} Mo, maximum {1} Mo.</value>
+  </data>
+  <data name="CsvImportNoValidRows" xml:space="preserve">
+    <value>Aucune boîte valide trouvée dans le fichier CSV.</value>
+  </data>
+  <data name="CsvImportTooManyRows" xml:space="preserve">
+    <value>Le fichier CSV contient {0} lignes, le maximum est {1}.</value>
+  </data>
+  <data name="CsvImportMissingServer" xml:space="preserve">
+    <value>Aucun serveur IMAP fourni (ni dans la ligne ni dans le formulaire).</value>
+  </data>
+  <data name="CsvImportInvalidPort" xml:space="preserve">
+    <value>Port invalide "{1}"</value>
+  </data>
+  <data name="CsvImportInvalidUseSsl" xml:space="preserve">
+    <value>Valeur use_ssl invalide "{1}"</value>
+  </data>
+  <data name="CsvImportMissingEmail" xml:space="preserve">
+    <value>Adresse e-mail manquante.</value>
+  </data>
+  <data name="CsvImportMissingPassword" xml:space="preserve">
+    <value>Mot de passe manquant.</value>
+  </data>
+  <data name="CsvImportMalformedLine" xml:space="preserve">
+    <value>Ligne CSV malformée — impossible à analyser.</value>
+  </data>
+  <data name="CsvImportDuplicateInFile" xml:space="preserve">
+    <value>Doublon dans le fichier CSV</value>
+  </data>
+  <data name="CsvImportAlreadyExists" xml:space="preserve">
+    <value>La boîte existe déjà</value>
+  </data>
+  <data name="CsvImportCouldNotBeProcessed" xml:space="preserve">
+    <value>L'import CSV n'a pas pu être traité</value>
+  </data>
+  <data name="CsvImportAdminOnly" xml:space="preserve">
+    <value>L'import CSV en masse est réservé aux administrateurs.</value>
+  </data>
+  <data name="ImportEmailsHeader" xml:space="preserve">
+    <value>Importer des e-mails</value>
+  </data>
+  <data name="ImportAccountsHeader" xml:space="preserve">
+    <value>Importer des comptes</value>
+  </data>
+  <!-- API Keys (read-only REST API) -->
+  <data name="ApiKeys" xml:space="preserve">
+    <value>Clés API</value>
+  </data>
+  <data name="ApiKeysDescription" xml:space="preserve">
+    <value>Gérez les clés API pour un accès programmatique en lecture seule à vos e-mails archivés.</value>
+  </data>
+  <data name="CreateApiKey" xml:space="preserve">
+    <value>Créer une clé API</value>
+  </data>
+  <data name="ApiKeyName" xml:space="preserve">
+    <value>Nom</value>
+  </data>
+  <data name="ApiKeyExpiration" xml:space="preserve">
+    <value>Expiration (facultatif)</value>
+  </data>
+  <data name="ApiKeyCreatedOnce" xml:space="preserve">
+    <value>Copiez cette clé maintenant. Pour des raisons de sécurité, elle n'est affichée qu'une seule fois et ne pourra pas être récupérée plus tard.</value>
+  </data>
+  <data name="ApiKeyValue" xml:space="preserve">
+    <value>Clé API</value>
+  </data>
+  <data name="ApiKeyPrefix" xml:space="preserve">
+    <value>Préfixe</value>
+  </data>
+  <data name="ApiKeyCreatedColumn" xml:space="preserve">
+    <value>Créée</value>
+  </data>
+  <data name="ApiKeyLastUsed" xml:space="preserve">
+    <value>Dernière utilisation</value>
+  </data>
+  <data name="ApiKeyExpires" xml:space="preserve">
+    <value>Expire</value>
+  </data>
+  <data name="ApiKeyStatus" xml:space="preserve">
+    <value>Statut</value>
+  </data>
+  <data name="ApiKeyActive" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="ApiKeyRevoked" xml:space="preserve">
+    <value>Révoquée</value>
+  </data>
+  <data name="ApiKeyExpired" xml:space="preserve">
+    <value>Expirée</value>
+  </data>
+  <data name="ApiKeyRevoke" xml:space="preserve">
+    <value>Révoquer</value>
+  </data>
+  <data name="ApiKeyRevokeConfirm" xml:space="preserve">
+    <value>Révoquer cette clé API ? Les applications qui l'utilisent cesseront immédiatement de fonctionner.</value>
+  </data>
+  <data name="ApiKeyOwner" xml:space="preserve">
+    <value>Propriétaire</value>
+  </data>
+  <data name="NoApiKeys" xml:space="preserve">
+    <value>Aucune clé API pour le moment.</value>
+  </data>
+  <data name="ApiKeyCreatedSuccess" xml:space="preserve">
+    <value>Clé API créée.</value>
+  </data>
+  <data name="ApiKeyRevokedSuccess" xml:space="preserve">
+    <value>Clé API révoquée.</value>
+  </data>
+  <data name="ApiKeyRevokeFailed" xml:space="preserve">
+    <value>Impossible de révoquer la clé API.</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copier</value>
+  </data>
+  <data name="MeetingInvitation" xml:space="preserve">
+    <value>Invitation à une réunion</value>
+  </data>
+  <data name="MeetingStart" xml:space="preserve">
+    <value>Début</value>
+  </data>
+  <data name="MeetingEnd" xml:space="preserve">
+    <value>Fin</value>
+  </data>
+  <data name="MeetingLocation" xml:space="preserve">
+    <value>Lieu</value>
+  </data>
+  <data name="MeetingOrganizer" xml:space="preserve">
+    <value>Organisateur</value>
+  </data>
+  <data name="MeetingAttendees" xml:space="preserve">
+    <value>Participants</value>
+  </data>
+  <data name="MeetingDescription" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="AcknowledgeFailures" xml:space="preserve">
+    <value>Reconnaître les échecs</value>
+  </data>
+  <data name="AcknowledgeFailuresConfirm" xml:space="preserve">
+    <value>Cela avancera l'horodatage de synchronisation à l'heure d'achèvement de ce travail, donc la prochaine synchronisation sera une synchronisation incrémentale normale. Les e-mails échoués ne seront pas réessayés. Continuer ?</value>
+  </data>
+  <data name="AcknowledgeFailuresSuccess" xml:space="preserve">
+    <value>L'horodatage de synchronisation a été avancé. La prochaine synchronisation sera incrémentale.</value>
+  </data>
+  <data name="FailuresAcknowledged" xml:space="preserve">
+    <value>Échecs reconnus</value>
+  </data>
+  <data name="OffloadTitle" xml:space="preserve">
+    <value>Décharger vers une autre boîte aux lettres</value>
+  </data>
+  <data name="OffloadIntro" xml:space="preserve">
+    <value>Ajoute le courriel archivé plus récent qu'une date de coupure dans une autre boîte aux lettres, en ignorant ce que cette boîte contient déjà. Le courriel plus ancien reste dans l'archive. Relancer est sans risque et n'ajoute rien de ce qui est déjà arrivé.</value>
+  </data>
+  <data name="OffloadSourceAndTarget" xml:space="preserve">
+    <value>Source et destination</value>
+  </data>
+  <data name="SourceAccount" xml:space="preserve">
+    <value>Compte source</value>
+  </data>
+  <data name="OffloadSelectTarget" xml:space="preserve">
+    <value>Sélectionner une boîte aux lettres de destination…</value>
+  </data>
+  <data name="OffloadLoadingFolders" xml:space="preserve">
+    <value>Chargement des dossiers…</value>
+  </data>
+  <data name="OffloadSelectFolder" xml:space="preserve">
+    <value>-- Sélectionner un dossier de destination --</value>
+  </data>
+  <data name="OffloadErrorLoadingFolders" xml:space="preserve">
+    <value>Erreur lors du chargement des dossiers</value>
+  </data>
+  <data name="OffloadSelectTargetFirst" xml:space="preserve">
+    <value>Sélectionnez d'abord une boîte aux lettres</value>
+  </data>
+  <data name="OffloadTargetFolderHelp" xml:space="preserve">
+    <value>Dossier racine dans la boîte aux lettres de destination. Avec INBOX la structure des dossiers source est recréée au niveau supérieur.</value>
+  </data>
+  <data name="OffloadWindow" xml:space="preserve">
+    <value>Plage de dates</value>
+  </data>
+  <data name="OffloadWindowMonths" xml:space="preserve">
+    <value>N derniers mois</value>
+  </data>
+  <data name="OffloadWindowMonthsHelp" xml:space="preserve">
+    <value>Résolu en une date fixe au démarrage de la tâche, de sorte que relancer la tâche sélectionne le même courriel. Mettez à 0 pour utiliser une date explicite.</value>
+  </data>
+  <data name="OffloadCutoffFrom" xml:space="preserve">
+    <value>Date de début</value>
+  </data>
+  <data name="OffloadCutoffFromHelp" xml:space="preserve">
+    <value>Remplace la fenêtre de mois. Inclusif, à partir de 00:00 de ce jour.</value>
+  </data>
+  <data name="OffloadCutoffTo" xml:space="preserve">
+    <value>Date de fin (facultatif)</value>
+  </data>
+  <data name="OffloadCutoffToHelp" xml:space="preserve">
+    <value>Inclusif, jusqu'à 23:59:59 de ce jour.</value>
+  </data>
+  <data name="OffloadOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="OffloadDryRun" xml:space="preserve">
+    <value>Simulation</value>
+  </data>
+  <data name="OffloadDryRunHelp" xml:space="preserve">
+    <value>Résout tout et indique ce qui se passerait par dossier, mais n'ajoute rien. Recommandé avant un vrai lancement.</value>
+  </data>
+  <data name="OffloadMarkAsSeen" xml:space="preserve">
+    <value>Marquer le courriel ajouté comme lu</value>
+  </data>
+  <data name="OffloadMarkAsSeenHelp" xml:space="preserve">
+    <value>Désactiver ceci garde le courriel non lu comme non lu dans la boîte aux lettres de destination.</value>
+  </data>
+  <data name="OffloadFolderHandling" xml:space="preserve">
+    <value>Gestion des dossiers</value>
+  </data>
+  <data name="OffloadExcludedFolders" xml:space="preserve">
+    <value>Dossiers source exclus</value>
+  </data>
+  <data name="OffloadRenameMap" xml:space="preserve">
+    <value>Table de renommage des dossiers</value>
+  </data>
+  <data name="OffloadNoneConfigured" xml:space="preserve">
+    <value>aucun configuré</value>
+  </data>
+  <data name="OffloadFolderHandlingHelp" xml:space="preserve">
+    <value>Les deux se configurent dans la section Offload de appsettings.json et sont vides par défaut. Les exclusions sont appliquées avant le renommage et couvrent les sous-dossiers.</value>
+  </data>
+  <data name="OffloadStart" xml:space="preserve">
+    <value>Lancer la décharge</value>
+  </data>
+  <data name="OffloadNoTargets" xml:space="preserve">
+    <value>Aucun autre compte IMAP n'est disponible comme destination. Créez-en un d'abord.</value>
+  </data>
+  <data name="OffloadNoTargetsAssigned" xml:space="preserve">
+    <value>Aucune des boîtes aux lettres qui vous sont attribuées ne peut servir de destination. Demandez à un administrateur de vous attribuer un autre compte IMAP.</value>
+  </data>
+  <data name="OffloadTargetRequired" xml:space="preserve">
+    <value>Veuillez choisir une boîte aux lettres de destination.</value>
+  </data>
+  <data name="OffloadTargetMustDiffer" xml:space="preserve">
+    <value>La boîte aux lettres de destination doit être différente de la source.</value>
+  </data>
+  <data name="OffloadTargetNotFound" xml:space="preserve">
+    <value>La boîte aux lettres de destination sélectionnée n'existe plus.</value>
+  </data>
+  <data name="OffloadTargetMustBeImap" xml:space="preserve">
+    <value>La boîte aux lettres de destination doit être un compte IMAP.</value>
+  </data>
+  <data name="OffloadCutoffRequired" xml:space="preserve">
+    <value>Veuillez fournir soit une fenêtre de mois, soit une date de début.</value>
+  </data>
+  <data name="OffloadCutoffToBeforeFrom" xml:space="preserve">
+    <value>La date de fin ne doit pas être antérieure à la date de début.</value>
+  </data>
+  <data name="OffloadNothingInWindow" xml:space="preserve">
+    <value>Aucun courriel archivé ne tombe dans cette plage de dates.</value>
+  </data>
+  <data name="OffloadQueued" xml:space="preserve">
+    <value>Décharge en file d'attente pour {0} courriels.</value>
+  </data>
+  <data name="OffloadDryRunQueued" xml:space="preserve">
+    <value>Simulation en file d'attente pour {0} courriels. Rien ne sera ajouté.</value>
+  </data>
+  <data name="OffloadAppended" xml:space="preserve">
+    <value>Ajoutés</value>
+  </data>
+  <data name="OffloadAlreadyPresent" xml:space="preserve">
+    <value>Déjà présents</value>
+  </data>
+  <data name="OffloadByFingerprint" xml:space="preserve">
+    <value>correspondance par empreinte</value>
+  </data>
+  <data name="OffloadExcluded" xml:space="preserve">
+    <value>Dossier exclu</value>
+  </data>
+  <data name="OffloadReport" xml:space="preserve">
+    <value>Rapport de décharge</value>
+  </data>
+  <data name="OffloadJob" xml:space="preserve">
+    <value>Décharge</value>
+  </data>
+
+  <data name="AuditExport" xml:space="preserve">
+    <value>Export de données d'audit</value>
+  </data>
+  <data name="AuditExportHistory" xml:space="preserve">
+    <value>Historique des exports</value>
+  </data>
+  <data name="Mailbox" xml:space="preserve">
+    <value>Boîte mail</value>
+  </data>
+  <data name="AllMailboxes" xml:space="preserve">
+    <value>Toutes les boîtes mail</value>
+  </data>
+  <data name="AttachmentMetadata" xml:space="preserve">
+    <value>Métadonnées des pièces jointes</value>
+  </data>
+  <data name="IncludeAttachmentMetadata" xml:space="preserve">
+    <value>Inclure le tableau des métadonnées des pièces jointes</value>
+  </data>
+  <data name="DataSupplierName" xml:space="preserve">
+    <value>Nom du fournisseur de données</value>
+  </data>
+  <data name="DataSupplierLocation" xml:space="preserve">
+    <value>Lieu du fournisseur de données</value>
+  </data>
+  <data name="NoAuditExportsYet" xml:space="preserve">
+    <value>Aucun export pour le moment</value>
+  </data>
+  <data name="Period" xml:space="preserve">
+    <value>Période</value>
+  </data>
+
+  <data name="Comment" xml:space="preserve">
+    <value>Commentaire</value>
+  </data>
+  <data name="AuditExportInvalidPeriod" xml:space="preserve">
+    <value>Période invalide : les dates de début et de fin sont requises.</value>
+  </data>
+  <data name="AuditExportRangeTooLong" xml:space="preserve">
+    <value>La période ne doit pas dépasser {0} ans.</value>
+  </data>
+  <data name="AuditExportAccountNotFound" xml:space="preserve">
+    <value>La boîte mail sélectionnée est introuvable.</value>
+  </data>
+  <data name="AuditExportFileNotFound" xml:space="preserve">
+    <value>Le fichier d'export est introuvable ou n'est plus disponible.</value>
+  </data>
+
+  <data name="BackToLogs" xml:space="preserve">
+    <value>Retour aux journaux</value>
+  </data>
+  <data name="ExportSettings" xml:space="preserve">
+    <value>Paramètres d'export</value>
+  </data>
+  <data name="CancelExportConfirm" xml:space="preserve">
+    <value>Annuler cet export ?</value>
+  </data>
+  <data name="FailedFilesTitle" xml:space="preserve">
+    <value>Fichiers en échec ({0})</value>
+  </data>
+  <data name="FailedFilesTruncated" xml:space="preserve">
+    <value>Seuls les 200 premiers fichiers en échec sont listés. Consultez les journaux Docker pour la liste complète.</value>
+  </data>
+  <data name="FailedFilesReason_BannerLine" xml:space="preserve">
+    <value>Ligne de bannière non standard avant les en-têtes du courriel (ex. export PST MailStore)</value>
+  </data>
+  <data name="FailedFilesReason_MboxFromLine" xml:space="preserve">
+    <value>Ligne de marqueur mbox « From  » résidual</value>
+  </data>
+  <data name="FailedFilesReason_SplitHeaderBlock" xml:space="preserve">
+    <value>Bloc d&apos;en-têtes scindé par des lignes vides</value>
+  </data>
+  <data name="FailedFilesReason_JunkBeforeHeaders" xml:space="preserve">
+    <value>Lignes non interprétables avant les en-têtes du courriel</value>
+  </data>
+  <data name="FailedFilesReason_UnparseableHeaders" xml:space="preserve">
+    <value>Les en-têtes du courriel n&apos;ont pas pu être interprétés</value>
+  </data>
+  <data name="FailedFilesReason_Generic" xml:space="preserve">
+    <value>Erreur lors du traitement du fichier</value>
+  </data>
+  <data name="RecoveredLabel" xml:space="preserve">
+    <value>Récupérés :</value>
+  </data>
+  <data name="RecoveredTitle" xml:space="preserve">
+    <value>Courriels récupérés</value>
+  </data>
+  <data name="RecoveredSummary" xml:space="preserve">
+    <value>{0} courriel(s) avec des en-têtes non standard ont été réparés automatiquement et archivés.</value>
+  </data>
+</root>

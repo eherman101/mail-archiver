@@ -8,7 +8,7 @@ namespace MailArchiver.Attributes
     {
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var authService = context.HttpContext.RequestServices.GetService<IAuthenticationService>();
+            var authService = context.HttpContext.RequestServices.GetService<MailArchiver.Services.IAuthenticationService>();
             
             // First check if user is authenticated
             if (authService == null || !authService.IsAuthenticated(context.HttpContext))
@@ -21,14 +21,14 @@ namespace MailArchiver.Attributes
             
             // For admin users, allow access
             var isAdmin = authService.IsCurrentUserAdmin(context.HttpContext);
-            var username = authService.GetCurrentUser(context.HttpContext);
-            
+            var userId = authService.GetCurrentUserId(context.HttpContext);
+
             if (isAdmin)
             {
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<UserAccessRequiredAttribute>>();
                 if (logger != null)
                 {
-                    logger.LogDebug("User {Username} is admin, granting access", username);
+                    logger.LogDebug("User {UserId} is admin, granting access", userId);
                 }
                 base.OnActionExecuting(context);
                 return;
@@ -55,8 +55,13 @@ namespace MailArchiver.Attributes
             }
             
             // Check if the user has access to this specific account
-            var currentUser = authService.GetCurrentUser(context.HttpContext);
-            var user = userService.GetUserByUsernameAsync(currentUser).Result;
+            if (!userId.HasValue)
+            {
+                context.Result = new RedirectToActionResult("AccessDenied", "Auth", null);
+                return;
+            }
+            
+            var user = userService.GetUserByIdAsync(userId.Value).Result;
             
             if (user == null)
             {
@@ -71,8 +76,8 @@ namespace MailArchiver.Attributes
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<UserAccessRequiredAttribute>>();
                 if (logger != null)
                 {
-                    logger.LogWarning("User {Username} (ID: {UserId}) attempted to access account {AccountId} but was denied access", 
-                        currentUser, user.Id, accountId.Value);
+                    logger.LogWarning("User ID {UserId} attempted to access account {AccountId} but was denied access", 
+                        user.Id, accountId.Value);
                 }
                 
                 context.Result = new RedirectToActionResult("AccessDenied", "Auth", null);
@@ -83,8 +88,8 @@ namespace MailArchiver.Attributes
                 var logger = context.HttpContext.RequestServices.GetService<ILogger<UserAccessRequiredAttribute>>();
                 if (logger != null)
                 {
-                    logger.LogDebug("User {Username} (ID: {UserId}) granted access to account {AccountId}", 
-                        currentUser, user.Id, accountId.Value);
+                    logger.LogDebug("User ID {UserId} granted access to account {AccountId}", 
+                        user.Id, accountId.Value);
                 }
             }
             

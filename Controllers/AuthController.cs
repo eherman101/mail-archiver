@@ -1,79 +1,292 @@
+using MailArchiver.Auth.Handlers;
+using MailArchiver.Auth.Options;
+using MailArchiver.Data;
+using MailArchiver.Models;
 using MailArchiver.Models.ViewModels;
 using MailArchiver.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Options;
 
 namespace MailArchiver.Controllers
 {
     public class AuthController : Controller
     {
-        private readonly IAuthenticationService _authService;
+        private readonly AuthenticationHandler _authenticationHandler;
+        private readonly MailArchiver.Services.IAuthenticationService _authService;
+        private readonly IUserService _userService;
         private readonly ILogger<AuthController> _logger;
+        private readonly IStringLocalizer<SharedResource> _localizer;
+        private readonly IAccessLogService _accessLogService;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
+        private readonly IOptions<OAuthOptions> _oAuthOptions;
 
-        public AuthController(IAuthenticationService authService, ILogger<AuthController> logger)
+        public AuthController(
+            MailArchiver.Services.IAuthenticationService authService
+            , AuthenticationHandler authenticationHandler
+            , IUserService userService
+            , ILogger<AuthController> logger
+            , IStringLocalizer<SharedResource> localizer
+            , IAccessLogService accessLogService
+            , IServiceScopeFactory serviceScopeFactory
+            , IOptions<OAuthOptions> oAuthOptions)
         {
             _authService = authService;
+            _authenticationHandler = authenticationHandler;
+            _userService = userService;
             _logger = logger;
+            _localizer = localizer;
+            _accessLogService = accessLogService;
+            _serviceScopeFactory = serviceScopeFactory;
+            _oAuthOptions = oAuthOptions;
         }
 
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
-            // If authentication is disabled, redirect to home
-            if (!_authService.IsAuthenticationRequired())
-            {
-                return RedirectToAction("Index", "Home");
-            }
-
             // If already authenticated, redirect to return URL or home
             if (_authService.IsAuthenticated(HttpContext))
             {
                 return RedirectToLocal(returnUrl);
             }
 
-            ViewData["ReturnUrl"] = returnUrl;
+            ConfigureOAuthViewData(returnUrl);
+
+            var oAuthEnabled = _oAuthOptions.Value?.Enabled ?? false;
+            var disablePasswordLogin = _oAuthOptions.Value?.DisablePasswordLogin ?? false;
+            var autoRedirect = _oAuthOptions.Value?.AutoRedirect ?? false;
+
+            // Auto-redirect to OAuth if enabled and password login is disabled
+            // SECURITY: Do not auto-redirect if there's an error message (e.g., from failed OIDC auth)
+            // to prevent infinite redirect loops
+            var hasError = !string.IsNullOrEmpty(Request.Query["error"]);
+            if (oAuthEnabled && disablePasswordLogin && autoRedirect && !hasError)
+            {
+                _logger.LogInformation("Auto-redirecting to OAuth provider (password login disabled, auto-redirect enabled)");
+                return View("AutoRedirect", new OAuthLoginViewModel { ReturnUrl = returnUrl, DisplayName = ViewBag.OAuthDisplayName });
+            }
+
+            // Pass OIDC error message to the view if present
+            if (hasError)
+            {
+                ViewBag.OAuthError = Request.Query["error"].ToString();
+            }
+
             return View(new LoginViewModel());
+        }
+
+        private void ConfigureOAuthViewData(string? returnUrl)
+        {
+            var options = _oAuthOptions.Value;
+            var enabled = options?.Enabled ?? false;
+
+            ViewBag.OAuthEnabled = enabled;
+            ViewBag.DisablePasswordLogin = options?.DisablePasswordLogin ?? false;
+            ViewBag.AutoRedirect = options?.AutoRedirect ?? false;
+            ViewData["ReturnUrl"] = returnUrl;
+
+            if (!enabled)
+            {
+                ViewBag.OAuthDisplayName = "OAuth";
+                ViewBag.OAuthSignInLabel = null;
+                return;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(options?.DisplayName)
+                ? null
+                : options.DisplayName.Trim();
+
+            ViewBag.OAuthDisplayName = displayName ?? "OAuth";
+            ViewBag.OAuthSignInLabel = string.IsNullOrWhiteSpace(displayName)
+                ? _localizer["SignInWithOAuth"].Value
+                : _localizer["SignInWithOAuthProvider", displayName].Value;
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Login(LoginViewModel model, string returnUrl = null)
+        [EnableRateLimiting("LoginAttempts")]
+        public async Task<IActionResult> Login(LoginViewModel model, string returnUrl = null)
         {
             ViewData["ReturnUrl"] = returnUrl;
-
-            if (!_authService.IsAuthenticationRequired())
-            {
-                return RedirectToAction("Index", "Home");
-            }
 
             if (ModelState.IsValid)
             {
                 if (_authService.ValidateCredentials(model.Username, model.Password))
                 {
-                    _authService.SignIn(HttpContext, model.Username);
+                    // Check if 2FA is enabled for the user
+                    var user = await _userService.GetUserByUsernameAsync(model.Username);
+                    if (user != null && user.IsTwoFactorEnabled)
+        {
+                        // SECURITY: regenerate the session before storing the 2FA identity to
+                        // prevent session fixation (an attacker who planted a session cookie
+                        // pre-login must not inherit the post-2FA authenticated session).
+                        HttpContext.Session.Clear();
+                         // Store username in session for 2FA verification
+                         HttpContext.Session.SetString("TwoFactorUsername", model.Username);
+                         HttpContext.Session.SetString("TwoFactorRememberMe", model.RememberMe.ToString());
+                         return RedirectToAction("Verify", "TwoFactor");
+                     }
+
+                    await _authenticationHandler.HandleUserAuthenticated(
+                        CookieAuthenticationDefaults.AuthenticationScheme
+                        , model.Username
+                        , model.RememberMe);
+                    
+                    // Check if this is initial setup (no mail accounts + default credentials)
+                    var configuration = HttpContext.RequestServices.GetRequiredService<IConfiguration>();
+                    var defaultUsername = configuration["Authentication:Username"];
+                    var defaultPassword = configuration["Authentication:Password"];
+                    var dbContext = HttpContext.RequestServices.GetRequiredService<MailArchiverDbContext>();
+                    var mailAccountCount = await dbContext.MailAccounts.CountAsync();
+                    
+                    if (mailAccountCount == 0 && 
+                        model.Username == defaultUsername)
+                    {
+                        // Compare stored password hash against the default password
+                        // to determine if the user has actually changed their password
+                        if (user != null && _userService.VerifyPassword(defaultPassword, user.PasswordHash ?? ""))
+                        {
+                            // Force password change for initial setup
+                            HttpContext.Session.SetString("MustChangePassword", "true");
+                            _logger.LogWarning("User {Username} logged in with default credentials on initial setup - forcing password change", model.Username);
+                        }
+                    }                    
+                    
                     return RedirectToLocal(returnUrl);
                 }
                 else
                 {
-                    ModelState.AddModelError("", "Invalid username or password.");
+                    ModelState.AddModelError("", _localizer["InvalidUserPassword"]);
                     _logger.LogWarning("Failed login attempt for username: {Username} from IP: {IP}", 
                         model.Username, HttpContext.Connection.RemoteIpAddress);
                 }
             }
 
+            // Ensure OAuth view data is set when returning view on validation errors
+            ConfigureOAuthViewData(returnUrl);
             return View(model);
         }
 
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        [ValidateAntiForgeryToken] // SECURITY: CSRF protection for OIDC login
+        public async Task LoginWithOAuth(OAuthLoginViewModel oAuthLoginViewModel) {
+            var properties = new AuthenticationProperties();
+
+            if(!string.IsNullOrWhiteSpace(oAuthLoginViewModel.ReturnUrl))
+                properties.Items["returnUrl"] = oAuthLoginViewModel.ReturnUrl;
+
+            // SECURITY: Add state parameter for CSRF protection
+            properties.Items["state"] = Guid.NewGuid().ToString();
+
+            // Trigger the OIDC login flow
+            await HttpContext.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme, properties).ConfigureAwait(false);
+        }
+
+        [HttpGet("[Controller]/LoginWithOAuth")]
+        public async Task<IActionResult> OidcCallback()
         {
-            _authService.SignOut(HttpContext);
-            return RedirectToAction("Login");
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Logout()
+        {
+            var username = _authService.GetCurrentUserDisplayName(HttpContext);
+            
+            // Check if user was authenticated via OIDC by looking for OAuthRemoteUserId
+            User? user = null;
+            if (!string.IsNullOrEmpty(username))
+            {
+                user = await _userService.GetUserByUsernameAsync(username);
+            }
+
+            // Log the logout if we have a username using a separate task to avoid DbContext concurrency issues
+            if (!string.IsNullOrEmpty(username))
+            {
+                var sourceIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var scope = _serviceScopeFactory.CreateScope();
+                        var accessLogService = scope.ServiceProvider.GetRequiredService<IAccessLogService>();
+                        await accessLogService.LogAccessAsync(username, AccessLogType.Logout, searchParameters: $"IP: {sourceIp}");
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error logging logout action for user {Username}", username);
+                    }
+                });
+            }
+
+            // SECURITY: Sign out from OIDC provider if user authenticated via OIDC
+            if (_oAuthOptions.Value.Enabled && user?.OAuthRemoteUserId != null)
+            {
+                _logger.LogInformation("User {Username} authenticated via OIDC, signing out from both local and remote provider", username);
+                
+                try
+                {
+                    // Sign out from both OIDC and local cookie authentication
+                    // This will trigger the OnRedirectToIdentityProviderForSignOut event and redirect to OIDC provider logout
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+                    // The OIDC sign-out will handle the redirect, so we don't return anything here
+                    return new EmptyResult();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    // Handle other OIDC providers that may not support standard sign-out
+                    _logger.LogWarning(ex, "Standard OIDC sign-out failed for user {Username}, fallback", username);
+                                        
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    await HttpContext.SignOutAsync(OAuthOptions.SignInScheme);
+                    
+                    return RedirectToAction("Login");
+                }
+                catch (Exception ex)
+                {
+                    // Handle any other exceptions during sign-out
+                    _logger.LogError(ex, "Unexpected error during OIDC sign-out for user {Username}", username);
+                    
+                    try
+                    {
+                        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                    }
+                    catch (Exception signOutEx)
+                    {
+                        _logger.LogError(signOutEx, "Failed to sign out user {Username} locally", username);
+                    }
+                    
+                    return RedirectToAction("Login");
+                }
+            }
+            else
+            {
+                // Regular sign out for non-OIDC users
+                _authService.SignOut(HttpContext);
+                return RedirectToAction("Login");
+            }
         }
         
         [HttpGet]
         public IActionResult AccessDenied()
         {
+            return View();
+        }
+        
+        [HttpGet]
+        public IActionResult Blocked(string message = null)
+        {
+            if (!string.IsNullOrEmpty(message))
+            {
+                ViewBag.BlockedMessage = message;
+            }
             return View();
         }
 

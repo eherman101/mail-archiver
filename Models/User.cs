@@ -7,18 +7,20 @@ namespace MailArchiver.Models
         public int Id { get; set; }
         
         [Required]
-        [StringLength(50)]
+        [StringLength(320)]
         public string Username { get; set; }
         
         [Required]
         [StringLength(100)]
         public string Email { get; set; }
         
-        [Required]
-        public string PasswordHash { get; set; }
+        public string? PasswordHash { get; set; }
         
         [Required]
         public bool IsAdmin { get; set; } = false;
+        
+        [Required]
+        public bool IsSelfManager { get; set; } = false;
         
         public bool IsActive { get; set; } = true;
         
@@ -26,7 +28,20 @@ namespace MailArchiver.Models
         
         public DateTime? LastLoginAt { get; set; }
         
+        // 2FA TOTP properties
+        public bool IsTwoFactorEnabled { get; set; } = false;
+        public string? TwoFactorSecret { get; set; }
+        public string? TwoFactorBackupCodes { get; set; }
+
+        // OAuth properties
+        public string? OAuthRemoteUserId { get; set; }
+        public bool RequiresApproval { get; set; } = false;
+
+        // Version update tracking
+        public string? LastSeenChangelogVersion { get; set; }
+        
         // Navigation properties
         public virtual ICollection<UserMailAccount> UserMailAccounts { get; set; } = new List<UserMailAccount>();
+        public virtual ICollection<ApiKey> ApiKeys { get; set; } = new List<ApiKey>();
     }
 }

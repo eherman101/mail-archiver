@@ -1,13 +1,15 @@
+using MailArchiver.Models;
 namespace MailArchiver.Services
 {
     public interface IAuthenticationService
     {
-        bool IsAuthenticationRequired();
         bool ValidateCredentials(string username, string password);
-        void SignIn(HttpContext context, string username);
+        Task StartUserSessionAsync(User user, bool rememberMe = false);
         void SignOut(HttpContext context);
         bool IsAuthenticated(HttpContext context);
-        string GetCurrentUser(HttpContext context);
+        string GetCurrentUserDisplayName(HttpContext context);
+        int? GetCurrentUserId(HttpContext context);
         bool IsCurrentUserAdmin(HttpContext context);
+        bool IsCurrentUserSelfManager(HttpContext context);
     }
 }

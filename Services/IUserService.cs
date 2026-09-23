@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using MailArchiver.Models;
 
 namespace MailArchiver.Services
@@ -7,6 +8,7 @@ namespace MailArchiver.Services
         Task<User?> GetUserByIdAsync(int id);
         Task<User?> GetUserByUsernameAsync(string username);
         Task<User?> GetUserByEmailAsync(string email);
+        Task<User> GetOrCreateUserFromRemoteIdentity(ClaimsIdentity remoteIdentity);
         Task<List<User>> GetAllUsersAsync();
         Task<User> CreateUserAsync(string username, string email, string password, bool isAdmin = false);
         Task<bool> UpdateUserAsync(User user);
@@ -20,5 +22,14 @@ namespace MailArchiver.Services
         Task<bool> IsUserAuthorizedForAccountAsync(int userId, int mailAccountId);
         Task<int> GetAdminCountAsync();
         string HashPassword(string password);
+        bool VerifyPassword(string password, string storedHash);
+
+        // Two-Factor Authentication methods
+        Task<bool> SetTwoFactorEnabledAsync(int userId, bool enabled);
+        Task<bool> SetTwoFactorSecretAsync(int userId, string secret);
+        Task<bool> SetTwoFactorBackupCodesAsync(int userId, string backupCodes);
+        Task<string?> GetTwoFactorSecretAsync(int userId);
+        Task<bool> VerifyTwoFactorBackupCodeAsync(int userId, string backupCode);
+        Task<bool> RemoveUsedBackupCodeAsync(int userId, string usedCode);
     }
 }

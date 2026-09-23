@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using MailArchiver.Attributes;
+using MailArchiver.Models;
 
 namespace MailArchiver.Models.ViewModels
 {
@@ -12,16 +14,16 @@ namespace MailArchiver.Models.ViewModels
         [EmailAddress(ErrorMessage = "Invalid email format")]
         [Display(Name = "Email address")]
         public string EmailAddress { get; set; }
-        [Required(ErrorMessage = "IMAP server is required")]
         [Display(Name = "IMAP server")]
-        public string ImapServer { get; set; }
-        [Required(ErrorMessage = "IMAP port is required")]
+        [ConditionalRequired(nameof(Provider), ProviderType.IMAP, ErrorMessage = "IMAP server is required for IMAP accounts")]
+        public string? ImapServer { get; set; }
         [Range(1, 65535, ErrorMessage = "Port must be between 1 and 65535")]
         [Display(Name = "IMAP port")]
-        public int ImapPort { get; set; } = 993;
-        [Required(ErrorMessage = "Username is required")]
+        [ConditionalRequired(nameof(Provider), ProviderType.IMAP, ErrorMessage = "IMAP port is required for IMAP accounts")]
+        public int? ImapPort { get; set; } = 993;
         [Display(Name = "Username")]
-        public string Username { get; set; }
+        [ConditionalRequired(nameof(Provider), ProviderType.IMAP, ErrorMessage = "Username is required for IMAP accounts")]
+        public string? Username { get; set; }
         
         [Display(Name = "Password")]
         public string? Password { get; set; }
@@ -32,17 +34,79 @@ namespace MailArchiver.Models.ViewModels
         [Display(Name = "Last sync")]
         public DateTime? LastSync { get; set; }
 
+        // True while a sync job is currently running for this account (used by the
+        // UI to show "Synchronization running…" instead of a stale 1970 epoch
+        // timestamp during a full resync).
+        public bool IsSyncing { get; set; }
+
+        // True when LastSync is at the Unix epoch but no sync job is currently
+        // running (e.g. after a crash/timeout before LastSync could be updated).
+        // The UI shows "Synchronization pending…" instead of 01.01.1970.
+        public bool IsSyncPending { get; set; }
+
+        /// <summary>
+        /// The last finished run left something behind — failed messages, failed folders or folders
+        /// the server says are gone. Drives a marker next to LastSync in the account list, which is
+        /// where a stale timestamp is actually noticed. Only set when there is something to say: a
+        /// green tick on every row would be wallpaper and would defeat the point of the marker.
+        /// </summary>
+        public bool LastRunHadIssues { get; set; }
+
         [Display(Name = "Account Enabled")]
         public bool IsEnabled { get; set; } = true;
-
-        [Display(Name = "MBox Only Account")]
-        public bool IsMBoxOnly { get; set; } = false;
 
         [Display(Name = "Excluded Folders")]
         public string? ExcludedFolders { get; set; } = string.Empty;
         
+        [Display(Name = "Delete After Days")]
+        [Range(1, int.MaxValue, ErrorMessage = "Delete after days must be at least 1")]
+        public int? DeleteAfterDays { get; set; }
+        
+        [Display(Name = "Local Retention Days")]
+        [Range(1, int.MaxValue, ErrorMessage = "Local retention days must be at least 1")]
+        public int? LocalRetentionDays { get; set; }
+
+        [Display(Name = "Sync Interval Minutes")]
+        [Range(1, int.MaxValue, ErrorMessage = "Sync interval minutes must be at least 1")]
+        public int? SyncIntervalMinutes { get; set; }
+
+        [Display(Name = "Full Sync Interval Hours")]
+        [Range(1, int.MaxValue, ErrorMessage = "Full sync interval hours must be at least 1")]
+        public int? FullSyncIntervalHours { get; set; }
+        
+        [Display(Name = "Provider")]
+        public ProviderType Provider { get; set; } = ProviderType.IMAP;
+        
+        [Display(Name = "Client ID")]
+        [ConditionalRequired(nameof(Provider), ProviderType.M365, ErrorMessage = "Client ID is required for M365 accounts")]
+        public string? ClientId { get; set; }
+
+        [Display(Name = "Client Secret")]
+        public string? ClientSecret { get; set; }
+
+        [Display(Name = "Tenant ID")]
+        [ConditionalRequired(nameof(Provider), ProviderType.M365, ErrorMessage = "Tenant ID is required for M365 accounts")]
+        public string? TenantId { get; set; }
+
+        // MSA (personal Microsoft account) OAuth2 fields — no required validation; blank = keep existing
+        [Display(Name = "Client ID (Azure App)")]
+        public string? MsaClientId { get; set; }
+
+        [Display(Name = "Client Secret (Azure App)")]
+        public string? MsaClientSecret { get; set; }
+
+        // Read-only: indicates whether MSA account is already authorized
+        public bool MsaIsAuthorized { get; set; }
+        public DateTime? MsaTokenExpiry { get; set; }
+
         // For UI display of available folders
         public List<string> AvailableFolders { get; set; } = new List<string>();
+
+        // Speicherverbrauch des Accounts (formatiert aus AccountStorageCache)
+        public string? StorageUsed { get; set; }
+
+        // Anzahl archivierter E-Mails des Accounts (nur für die Anzeige in der Übersicht)
+        public int EmailCount { get; set; }
 
         // Flag to determine if it's a new or existing account
         public bool IsNewAccount => Id == 0;

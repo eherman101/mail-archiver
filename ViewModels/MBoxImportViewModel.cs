@@ -19,8 +19,11 @@ namespace MailArchiver.Models.ViewModels
 
         public List<SelectListItem> AvailableAccounts { get; set; } = new List<SelectListItem>();
         public List<SelectListItem> AvailableFolders { get; set; } = new List<SelectListItem>();
+        
+        // Dictionary to store Provider type for each account (key = account Id)
+        public Dictionary<int, ProviderType> AccountProviders { get; set; } = new Dictionary<int, ProviderType>();
 
-        public long MaxFileSize { get; set; } = 5_000_000_000; // 5 GB default
+        public long MaxFileSize { get; set; }
         public string MaxFileSizeFormatted => FormatFileSize(MaxFileSize);
 
         private string FormatFileSize(long bytes)
