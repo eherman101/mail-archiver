@@ -17,8 +17,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   `sed "s/--platform=\$BUILDPLATFORM //" Dockerfile | sudo docker build -f - -t mail-archiver-local:latest .`
   in `~/claude-code/mail-archiver`. Upstream migrations can rebuild indexes over the whole archive and exceed the
   default 60 s DB timeout, so production sets `Npgsql__CommandTimeout=3600`. Run heavy DB work on the SSD (/volume2), never the HDD.
-- Rollback point from before the 2026-09 upstream sync: git tag `fork-pre-upstream-sync-2026-09-23`, and the NAS
-  image `mail-archiver-local:fork-pre-upstream-sync-2026-09-23`.
+- The pre-sync fork state (Aug 2025) is git tag `fork-pre-upstream-sync-2026-09-23`. Its NAS image and DB dump were
+  deleted once the upgrade was confirmed; /volume2/docker (app data and DB) is backed up as a whole.
 - Upstream now targets .NET 10, and this Pi has no dotnet SDK, so build and test through Docker.
 
 ## Development Commands
