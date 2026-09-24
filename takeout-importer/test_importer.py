@@ -28,7 +28,7 @@ print("=== Import Results ===")
 print(f"Status: {status}")
 print("Total Emails: 10")
 print("Imported Successfully: 3")
-print("Failed: 1")
+print(f"Failed: {os.environ.get('FAKE_FAILED', '1')}")
 print("Skipped (malformed): 0")
 print("Skipped (duplicates): 6")
 sys.exit(0 if status == "Completed" else 1)
@@ -53,6 +53,8 @@ class ImporterTest(unittest.TestCase):
             "IMPORT_CWD": str(self.tmp),
             "FAKE_LOG": str(self.calls),
             "FAKE_STATUS": "CompletedWithErrors",
+            "FAKE_FAILED": "1",
+            "DELETE_AFTER_IMPORT": "false",
         })
         self.cfg = importer.Config()
         self.state = importer.State(self.cfg.state_dir / "state.json")
@@ -136,6 +138,43 @@ class ImporterTest(unittest.TestCase):
         (self.tmp / "downloads" / "holiday.zip").write_bytes(b"x")
         self.poll()
         self.assertEqual(self.state.archives, {})
+
+    def enable_delete(self):
+        os.environ["DELETE_AFTER_IMPORT"] = "true"
+        self.cfg = importer.Config()
+
+    def test_clean_import_deletes_archive(self):
+        self.enable_delete()
+        os.environ["FAKE_FAILED"] = "0"
+        path = self.make_zip()
+        self.poll()
+        self.assertFalse(path.exists())
+        entry = next(iter(self.state.archives.values()))
+        self.assertIn("deleted", entry)
+        self.assertEqual(len(self.calls_made()), 1)
+
+    def test_archive_with_failed_messages_is_kept(self):
+        self.enable_delete()
+        path = self.make_zip()  # fake CLI reports Failed: 1
+        self.poll()
+        self.assertTrue(path.exists())
+
+    def test_delete_off_by_default(self):
+        os.environ["FAKE_FAILED"] = "0"
+        path = self.make_zip()
+        self.poll()
+        self.assertTrue(path.exists())
+
+    def test_crashed_or_unrecorded_archive_never_deleted(self):
+        self.enable_delete()
+        os.environ["FAKE_STATUS"] = "crash"
+        crashed = self.make_zip()
+        manual = self.make_zip(name="takeout-20250101T000000Z-1-001.zip")
+        self.state.archives[importer.archive_key(manual)] = {"file": manual.name, "attempts": 0, "result": "done"}
+        for _ in range(4):
+            importer.run_once(self.cfg, self.state)
+        self.assertTrue(crashed.exists())
+        self.assertTrue(manual.exists())  # done, but no totals: never imported by us
 
     def test_parse_results(self):
         res = importer.parse_results("Status: Completed\nTotal Emails: 5\nFailed: 0\nDuration: 00:01:00\n")

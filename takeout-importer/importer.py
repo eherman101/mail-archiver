@@ -62,6 +62,8 @@ class Config:
         # A download counts as finished once its size has not changed for this long.
         self.settle_seconds = int(env("SETTLE_MINUTES", "5")) * 60
         self.max_attempts = int(env("MAX_ATTEMPTS", "3"))
+        # Delete a downloaded archive once every message in it is in the archive.
+        self.delete_after_import = env("DELETE_AFTER_IMPORT", "false").lower() in ("1", "true", "yes")
         self.import_cmd = env("IMPORT_CMD", "dotnet /app/MailArchiver.dll").split()
         self.import_cwd = env("IMPORT_CWD", "/app")
         self.gmail_user = os.environ.get("GMAIL_USER", "")
@@ -334,6 +336,34 @@ def write_status(cfg, state):
     (cfg.state_dir / "status.json").write_text(json.dumps(status, indent=2))
 
 
+def imported_cleanly(entry):
+    """True when the import ran to the end and nothing in the archive was left out.
+
+    Duplicates count as clean: they are already in the archive. An archive with
+    failed or malformed messages is kept, so those messages are not lost with it.
+    """
+    totals = entry.get("totals")
+    return (entry.get("result") == "done" and totals is not None
+            and totals["failed"] == 0 and totals["malformed"] == 0)
+
+
+def delete_imported(cfg, state):
+    if not cfg.delete_after_import:
+        return
+    for path in sorted(cfg.downloads.iterdir()):
+        if not path.is_file() or not ARCHIVE_RE.match(path.name):
+            continue
+        entry = state.archives.get(archive_key(path))
+        if entry and imported_cleanly(entry):
+            try:
+                path.unlink()
+            except OSError as exc:
+                log(f"could not delete {path.name}: {exc}")
+                continue
+            entry["deleted"] = now_iso()
+            log(f"deleted {path.name} ({entry['totals']['imported']} new messages are in the archive)")
+
+
 def run_once(cfg, state):
     for archive in finished_downloads(cfg, state):
         entry = process_archive(cfg, state, archive)
@@ -345,6 +375,7 @@ def run_once(cfg, state):
         elif entry["result"] == "failed" and entry["attempts"] >= cfg.max_attempts:
             notify(cfg, "Mail Archive import FAILED",
                    f"{archive.name} failed {entry['attempts']} times: {entry.get('error')}")
+    delete_imported(cfg, state)
     state.save()
     write_status(cfg, state)
 
