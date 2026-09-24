@@ -7,10 +7,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Fork of `s1t5/mail-archiver` (remote `upstream`). Sync with `git fetch upstream && git merge upstream/main`.
 - Production runs on the broadway NAS as service `mailarchive-app` (image `mail-archiver-local:latest`,
   built from this repo); see `~/broadway-nas-docker.md`. It archives a Gmail account from Google Takeout mbox files.
-- Our only fork-specific code is migration history:
+- Fork-specific code (everything else comes from upstream, so take upstream's side in conflicts):
   - `20250815171800_AddIsMBoxOnlyColumn`: our old import-only flag. It is applied on the live DB, so keep the file.
   - `20260923120000_ForkMBoxOnlyToImportProvider`: maps `IsMBoxOnly = true` to upstream's `Provider = 'IMPORT'`.
-  Everything else comes from upstream: take upstream's side in conflicts.
+  - `Auth/Middelwares/AutoLoginMiddleware.cs` plus one line in `Auth/Extensions/UseAuthExtension.cs`: with
+    `Authentication__AutoLoginUser=admin`, there's no login screen. Upstream exits at startup if `Authentication__Enabled=false`.
+  - `takeout-importer/`: a sidecar that imports downloaded Takeout zips (see its README).
+- Deploying: the NAS's legacy Docker builder can't parse `--platform=$BUILDPLATFORM`, so build with
+  `sed "s/--platform=\$BUILDPLATFORM //" Dockerfile | sudo docker build -f - -t mail-archiver-local:latest .`
+  in `~/claude-code/mail-archiver`. Upstream migrations can rebuild indexes over the whole archive and exceed the
+  default 60 s DB timeout, so production sets `Npgsql__CommandTimeout=3600`. Run heavy DB work on the SSD (/volume2), never the HDD.
 - Rollback point from before the 2026-09 upstream sync: git tag `fork-pre-upstream-sync-2026-09-23`, and the NAS
   image `mail-archiver-local:fork-pre-upstream-sync-2026-09-23`.
 - Upstream now targets .NET 10, and this Pi has no dotnet SDK, so build and test through Docker.
